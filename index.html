@@ -501,7 +501,8 @@ input[type=file] { display:none; }
           <div class="step-content">
             <h4>Créer un Apps Script</h4>
             <p>Va sur <a href="https://script.google.com" target="_blank">script.google.com</a> → Nouveau projet → remplace <strong>tout</strong> le contenu de <code>Code.gs</code> par le code ci-dessous :</p>
-            <div style="margin-top:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--gold);white-space:pre-wrap;overflow-x:auto;line-height:1.6">const FILE = 'seiko_mods_data.json';
+            <div style="margin-top:10px;position:relative;">
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--gold);white-space:pre;overflow:auto;line-height:1.6;max-height:180px;word-break:normal;" id="gasCodeBlock">const FILE = 'seiko_mods_data.json';
 
 function doPost(e) {
   try {
@@ -542,6 +543,8 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JAVASCRIPT);
   }
 }</div>
+              <button onclick="copyGasCode()" style="margin-top:8px;width:100%;padding:10px;background:rgba(200,169,110,0.1);border:1px solid var(--gold);color:var(--gold);border-radius:8px;font-family:'DM Mono',monospace;font-size:0.7rem;cursor:pointer;letter-spacing:0.5px;" id="copyGasBtn">📋 Copier le code</button>
+            </div>
           </div>
         </div>
 
@@ -1096,6 +1099,17 @@ function renderRecap() {
     const pct=totalDep>0?(total/totalDep*100):0;
     return `<div class="bar-item"><div class="bar-label-row"><span>${m.icon} ${cat}</span><span>${pct.toFixed(0)}% · ${fmt(total)}</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${m.color}"></div></div></div>`;
   }).join('')||'<div style="color:var(--muted);font-size:0.8rem;text-align:center">Aucune dépense</div>';
+}
+
+function copyGasCode() {
+  const code = document.getElementById('gasCodeBlock').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copyGasBtn');
+    btn.textContent = '✅ Copié !';
+    setTimeout(() => { btn.textContent = '📋 Copier le code'; }, 2000);
+  }).catch(() => {
+    toast('⚠️ Copie manuelle requise', '#e8925a');
+  });
 }
 
 function renderSettings() {
