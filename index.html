@@ -501,49 +501,8 @@ input[type=file] { display:none; }
           <div class="step-content">
             <h4>Créer un Apps Script</h4>
             <p>Va sur <a href="https://script.google.com" target="_blank">script.google.com</a> → Nouveau projet → remplace <strong>tout</strong> le contenu de <code>Code.gs</code> par le code ci-dessous :</p>
-            <div style="margin-top:10px;position:relative;">
-              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--gold);white-space:pre;overflow:auto;line-height:1.6;max-height:180px;word-break:normal;" id="gasCodeBlock">const FILE = 'seiko_mods_data.json';
-
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    const files = DriveApp.getFilesByName(FILE);
-    const content = JSON.stringify(data);
-    if (files.hasNext()) {
-      files.next().setContent(content);
-    } else {
-      DriveApp.createFile(FILE, content, MimeType.PLAIN_TEXT);
-    }
-    return ContentService
-      .createTextOutput(JSON.stringify({ok:true}))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ok:false,error:err.message}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function doGet(e) {
-  try {
-    const cb = e.parameter.callback || 'cb';
-    const files = DriveApp.getFilesByName(FILE);
-    if (!files.hasNext()) {
-      return ContentService
-        .createTextOutput(cb + '({})')
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    }
-    const content = files.next().getBlob().getDataAsString();
-    return ContentService
-      .createTextOutput(cb + '(' + content + ')')
-      .setMimeType(ContentService.MimeType.JAVASCRIPT);
-  } catch(err) {
-    return ContentService
-      .createTextOutput(e.parameter.callback+'({})')
-      .setMimeType(ContentService.MimeType.JAVASCRIPT);
-  }
-}</div>
-              <button onclick="copyGasCode()" style="margin-top:8px;width:100%;padding:10px;background:rgba(200,169,110,0.1);border:1px solid var(--gold);color:var(--gold);border-radius:8px;font-family:'DM Mono',monospace;font-size:0.7rem;cursor:pointer;letter-spacing:0.5px;" id="copyGasBtn">📋 Copier le code</button>
+            <div style="margin-top:10px;">
+              <button onclick="copyGasCode()" id="copyGasBtn" style="width:100%;padding:14px;background:rgba(200,169,110,0.1);border:1px solid var(--gold);color:var(--gold);border-radius:10px;font-family:'DM Mono',monospace;font-size:0.78rem;cursor:pointer;letter-spacing:0.5px;font-weight:600;">📋 Copier le code Apps Script</button>
             </div>
           </div>
         </div>
@@ -1102,11 +1061,59 @@ function renderRecap() {
 }
 
 function copyGasCode() {
-  const code = document.getElementById('gasCodeBlock').textContent;
+  const code = `const FILE = 'seiko_mods_data.json';
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const files = DriveApp.getFilesByName(FILE);
+    const content = JSON.stringify(data);
+    if (files.hasNext()) {
+      files.next().setContent(content);
+    } else {
+      DriveApp.createFile(FILE, content, MimeType.PLAIN_TEXT);
+    }
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:true}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:false,error:err.message}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  try {
+    const cb = e.parameter.callback || 'cb';
+    const files = DriveApp.getFilesByName(FILE);
+    if (!files.hasNext()) {
+      return ContentService
+        .createTextOutput(cb + '({})')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    const content = files.next().getBlob().getDataAsString();
+    return ContentService
+      .createTextOutput(cb + '(' + content + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(e.parameter.callback+'({})')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+}`;
   navigator.clipboard.writeText(code).then(() => {
     const btn = document.getElementById('copyGasBtn');
-    btn.textContent = '✅ Copié !';
-    setTimeout(() => { btn.textContent = '📋 Copier le code'; }, 2000);
+    btn.textContent = '✅ Code copié !';
+    btn.style.background = 'rgba(76,175,125,0.15)';
+    btn.style.borderColor = 'var(--green)';
+    btn.style.color = 'var(--green)';
+    setTimeout(() => {
+      btn.textContent = '📋 Copier le code Apps Script';
+      btn.style.background = 'rgba(200,169,110,0.1)';
+      btn.style.borderColor = 'var(--gold)';
+      btn.style.color = 'var(--gold)';
+    }, 2500);
   }).catch(() => {
     toast('⚠️ Copie manuelle requise', '#e8925a');
   });
@@ -1146,76 +1153,65 @@ function clearData() {
 }
 
 
-// ─── CATALOGUE ────────────────────────────────────────────────────────────────
+// ─── CATALOGUE (version unifiée, sans overrides) ─────────────────────────────
 
 let watchCatalogue = JSON.parse(localStorage.getItem('seiko_catalogue') || '[]');
+let watchPhotos    = JSON.parse(localStorage.getItem('seiko_photos')    || '{}');
 let currentWatchId = null;
-let editingTagType = null;
-let dragSrcIdx = null;
+let dragSrcIdx     = null;
+// Pour le drag tactile (mobile)
+let touchDragId    = null;
+let touchDragEl    = null;
 
-function saveCatalogue() {
-  localStorage.setItem('seiko_catalogue', JSON.stringify(watchCatalogue));
-}
+function saveCatalogue() { localStorage.setItem('seiko_catalogue', JSON.stringify(watchCatalogue)); }
+function savePhotos()    { localStorage.setItem('seiko_photos',    JSON.stringify(watchPhotos)); }
 
-// Sync catalogue depuis les ventes (auto)
+// ─── SYNC depuis ventes ───────────────────────────────────────────────────────
 function syncCatalogueFromSales() {
   const ventes = entries.filter(e => e.cat === 'Vente');
   ventes.forEach(v => {
-    const exists = watchCatalogue.find(w => w.entryId === v.id);
-    if (!exists) {
+    if (!watchCatalogue.find(w => w.entryId === v.id)) {
       watchCatalogue.push({
-        id: v.id,
-        entryId: v.id,
-        name: v.desc,
-        price: v.amount,
-        date: v.date,
-        note: v.note || '',
-        rating: 0,
-        tags: [],
-        rank: watchCatalogue.length + 1
+        id: v.id, entryId: v.id, name: v.desc,
+        price: v.amount, date: v.date, note: v.note || '',
+        rating: 0, tags: [], rank: watchCatalogue.length + 1
       });
     }
   });
-  // Supprime ceux dont la vente a été effacée
   watchCatalogue = watchCatalogue.filter(w => entries.find(e => e.id === w.entryId));
-  // Recalcule les ranks
-  watchCatalogue.forEach((w, i) => w.rank = i + 1);
+  watchCatalogue.forEach((w, i) => { if (!w.rank) w.rank = i + 1; });
   saveCatalogue();
 }
 
+// ─── RENDU GRILLE ─────────────────────────────────────────────────────────────
 function renderCatalogue() {
   syncCatalogueFromSales();
-  const grid = document.getElementById('catalogueGrid');
-  const hint = document.getElementById('dragHint');
+  const grid  = document.getElementById('catalogueGrid');
+  const hint  = document.getElementById('dragHint');
   const count = document.getElementById('catCount');
 
   if (!watchCatalogue.length) {
     grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">⌚</div><p>Aucune vente encore.<br>Tes montres vendues apparaîtront ici.</p></div>';
-    hint.textContent = '';
-    count.textContent = '';
-    return;
+    hint.textContent = ''; count.textContent = ''; return;
   }
 
   count.textContent = watchCatalogue.length + ' montre' + (watchCatalogue.length > 1 ? 's' : '');
-  hint.textContent = watchCatalogue.length > 1 ? '⬆⬇ Glisse les cartes pour réordonner' : '';
+  hint.textContent  = watchCatalogue.length > 1 ? '✏️ Appuie pour modifier · Maintiens pour réordonner' : '✏️ Appuie pour modifier';
 
   const sorted = [...watchCatalogue].sort((a, b) => a.rank - b.rank);
-
   grid.innerHTML = sorted.map((w, i) => {
     const rankClass = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : '';
     const stars = Array.from({length: 10}, (_, s) =>
-      `<span class="star ${s < w.rating ? 'active' : ''}" onclick="quickRate(${w.id},${s+1})">★</span>`
+      `<span class="star ${s < w.rating ? 'active' : ''}">★</span>`
     ).join('');
-    const tags = w.tags.map(t => `<span class="watch-tag">${t}</span>`).join('');
-    return `<div class="watch-card" draggable="true"
-        data-id="${w.id}" data-idx="${i}"
-        ondragstart="onDragStart(event,${i})"
-        ondragover="onDragOver(event)"
-        ondrop="onDrop(event,${i})"
-        ondragend="onDragEnd(event)"
-        onclick="openWatchModal(${w.id})">
+    const tags  = w.tags.map(t => `<span class="watch-tag">${t}</span>`).join('');
+    const photo = watchPhotos[w.id];
+    const imgArea = photo
+      ? `<div class="watch-img-area"><img src="${photo}" alt="${w.name}" loading="lazy"></div>`
+      : `<div class="watch-img-area">⌚</div>`;
+    return `<div class="watch-card" data-id="${w.id}" data-rank="${w.rank}">
       <div class="watch-rank-badge ${rankClass}">${i+1}</div>
-      <div class="watch-img-area">⌚</div>
+      ${imgArea}
       <div class="watch-card-body">
         <div class="watch-card-name">${w.name}</div>
         <div class="watch-stars">${stars}</div>
@@ -1225,108 +1221,171 @@ function renderCatalogue() {
       </div>
     </div>`;
   }).join('');
+
+  // Attache les événements tap/longpress après le rendu
+  grid.querySelectorAll('.watch-card').forEach((card, i) => {
+    const id = parseInt(card.dataset.id);
+    let pressTimer = null;
+    let moved = false;
+
+    card.addEventListener('touchstart', e => {
+      moved = false;
+      pressTimer = setTimeout(() => {
+        if (!moved) startTouchDrag(card, i);
+      }, 500);
+    }, { passive: true });
+
+    card.addEventListener('touchmove', () => {
+      moved = true;
+      clearTimeout(pressTimer);
+    }, { passive: true });
+
+    card.addEventListener('touchend', e => {
+      clearTimeout(pressTimer);
+      if (!moved && touchDragId === null) {
+        openWatchModal(id);
+      }
+      endTouchDrag();
+    });
+
+    card.addEventListener('click', e => {
+      if (touchDragId !== null) return;
+      openWatchModal(id);
+    });
+  });
 }
 
-// Quick rate depuis la grille (sans ouvrir modal)
-function quickRate(id, rating) {
-  event.stopPropagation();
-  const w = watchCatalogue.find(w => w.id === id);
-  if (w) { w.rating = rating; saveCatalogue(); renderCatalogue(); scheduleSyncAfterEdit(); }
+// ─── DRAG TACTILE (mobile) ────────────────────────────────────────────────────
+function startTouchDrag(card, idx) {
+  touchDragId = idx;
+  touchDragEl = card;
+  card.classList.add('dragging');
+  toast('✋ Glisse vers une autre carte pour réordonner', '#c8a96e');
 }
 
-// ─── DRAG & DROP ─────────────────────────────────────────────────────────────
+function endTouchDrag() {
+  if (touchDragEl) touchDragEl.classList.remove('dragging');
+  touchDragId = null; touchDragEl = null;
+  document.querySelectorAll('.watch-card').forEach(c => c.classList.remove('drag-over'));
+}
+
+// ─── DRAG SOURIS (desktop) ────────────────────────────────────────────────────
 function onDragStart(e, idx) {
   dragSrcIdx = idx;
   e.currentTarget.classList.add('dragging');
   e.dataTransfer.effectAllowed = 'move';
 }
 function onDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
   e.currentTarget.classList.add('drag-over');
 }
 function onDrop(e, idx) {
   e.preventDefault();
   if (dragSrcIdx === null || dragSrcIdx === idx) return;
-  const sorted = [...watchCatalogue].sort((a, b) => a.rank - b.rank);
-  const moved = sorted.splice(dragSrcIdx, 1)[0];
-  sorted.splice(idx, 0, moved);
-  sorted.forEach((w, i) => {
-    const orig = watchCatalogue.find(x => x.id === w.id);
-    if (orig) orig.rank = i + 1;
-  });
-  saveCatalogue();
-  renderCatalogue();
-  scheduleSyncAfterEdit();
+  reorderCatalogue(dragSrcIdx, idx);
 }
 function onDragEnd(e) {
   dragSrcIdx = null;
-  document.querySelectorAll('.watch-card').forEach(c => {
-    c.classList.remove('dragging', 'drag-over');
-  });
+  document.querySelectorAll('.watch-card').forEach(c => c.classList.remove('dragging','drag-over'));
 }
 
-// ─── WATCH DETAIL MODAL ───────────────────────────────────────────────────────
+function reorderCatalogue(fromIdx, toIdx) {
+  const sorted = [...watchCatalogue].sort((a, b) => a.rank - b.rank);
+  const moved  = sorted.splice(fromIdx, 1)[0];
+  sorted.splice(toIdx, 0, moved);
+  sorted.forEach((w, i) => { const o = watchCatalogue.find(x => x.id === w.id); if (o) o.rank = i + 1; });
+  saveCatalogue(); renderCatalogue(); scheduleSyncAfterEdit();
+}
+
+// ─── MODAL DÉTAIL MONTRE ──────────────────────────────────────────────────────
 function openWatchModal(id) {
-  currentWatchId = id;
   const w = watchCatalogue.find(w => w.id === id);
   if (!w) return;
+  currentWatchId = id;
 
   document.getElementById('wdTitle').textContent = w.name;
-  document.getElementById('wdSub').textContent = fmtDate(w.date) + ' · ' + fmt(w.price);
-  document.getElementById('wdNote').value = w.note || '';
+  document.getElementById('wdSub').textContent   = fmtDate(w.date) + ' · ' + fmt(w.price);
+  document.getElementById('wdNote').value        = w.note || '';
 
   // Stars
   const starsEl = document.getElementById('wdStars');
+  starsEl.dataset.rating = w.rating;
   starsEl.innerHTML = Array.from({length: 10}, (_, s) =>
-    `<span class="star-lg ${s < w.rating ? 'active' : ''}" onclick="setModalRating(${s+1})">${s < w.rating ? '★' : '☆'}</span>`
+    `<span class="star-lg ${s < w.rating ? 'active' : ''}" data-r="${s+1}">${s < w.rating ? '★' : '☆'}</span>`
   ).join('');
+  starsEl.querySelectorAll('.star-lg').forEach(star => {
+    star.addEventListener('click', () => setModalRating(parseInt(star.dataset.r)));
+  });
 
-  // Reset tags
-  document.querySelectorAll('#wdStyleTags .tag-opt').forEach(el => {
+  // Tags
+  document.querySelectorAll('#wdStyleTags .tag-opt, #wdColorTags .tag-opt').forEach(el => {
     el.classList.toggle('sel', w.tags.includes(el.dataset.tag));
   });
-  document.querySelectorAll('#wdColorTags .tag-opt').forEach(el => {
-    el.classList.toggle('sel', w.tags.includes(el.dataset.tag));
-  });
+
+  // Photo
+  const photo   = watchPhotos[id];
+  const preview = document.getElementById('photoPreview');
+  const zone    = document.querySelector('.photo-upload-zone');
+  const fi      = document.getElementById('photoFileInput');
+  fi.value = ''; delete fi.dataset.tempPhoto;
+  if (photo) {
+    preview.src = photo; preview.style.display = 'block'; zone.style.display = 'none';
+  } else {
+    preview.style.display = 'none'; zone.style.display = 'block';
+  }
 
   document.getElementById('watchModalOverlay').classList.add('open');
 }
 
 function setModalRating(r) {
-  const starsEl = document.getElementById('wdStars');
-  starsEl.querySelectorAll('.star-lg').forEach((s, i) => {
+  document.getElementById('wdStars').dataset.rating = r;
+  document.getElementById('wdStars').querySelectorAll('.star-lg').forEach((s, i) => {
     s.classList.toggle('active', i < r);
     s.textContent = i < r ? '★' : '☆';
   });
-  // Store temp rating on element
-  starsEl.dataset.rating = r;
 }
 
-function toggleTag(el, type) {
-  el.classList.toggle('sel');
-}
+function toggleTag(el) { el.classList.toggle('sel'); }
 
 function saveWatchDetail() {
   const w = watchCatalogue.find(w => w.id === currentWatchId);
-  if (!w) return;
+  if (!w) { toast('❌ Montre introuvable', '#e05555'); return; }
 
-  const starsEl = document.getElementById('wdStars');
-  const activeStars = starsEl.querySelectorAll('.star-lg.active').length;
-  w.rating = starsEl.dataset.rating ? parseInt(starsEl.dataset.rating) : activeStars;
+  // Rating
+  w.rating = parseInt(document.getElementById('wdStars').dataset.rating) || 0;
+  // Note
   w.note = document.getElementById('wdNote').value.trim();
+  // Tags
+  w.tags = [];
+  document.querySelectorAll('#wdStyleTags .tag-opt.sel, #wdColorTags .tag-opt.sel').forEach(el => w.tags.push(el.dataset.tag));
 
-  const selTags = [];
-  document.querySelectorAll('#wdStyleTags .tag-opt.sel, #wdColorTags .tag-opt.sel').forEach(el => {
-    selTags.push(el.dataset.tag);
-  });
-  w.tags = selTags;
+  // Photo
+  const fi = document.getElementById('photoFileInput');
+  if (fi.dataset.tempPhoto) {
+    watchPhotos[currentWatchId] = fi.dataset.tempPhoto;
+    savePhotos();
+    delete fi.dataset.tempPhoto;
+  }
 
   saveCatalogue();
   closeWatchModal();
   renderCatalogue();
   toast('✓ Montre mise à jour', '#4caf7d');
   scheduleSyncAfterEdit();
+}
+
+function handlePhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const data = e.target.result;
+    document.getElementById('photoPreview').src = data;
+    document.getElementById('photoPreview').style.display = 'block';
+    document.querySelector('.photo-upload-zone').style.display = 'none';
+    document.getElementById('photoFileInput').dataset.tempPhoto = data;
+  };
+  reader.readAsDataURL(file);
 }
 
 function closeWatchModal() {
@@ -1660,90 +1719,7 @@ function renderStock() {
   },0);
 }
 
-// ─── PHOTOS CATALOGUE ─────────────────────────────────────────────────────────
-let watchPhotos = JSON.parse(localStorage.getItem('seiko_photos') || '{}');
 
-function savePhotos() { localStorage.setItem('seiko_photos', JSON.stringify(watchPhotos)); }
-
-function handlePhotoUpload(event) {
-  const file=event.target.files[0];
-  if(!file) return;
-  const reader=new FileReader();
-  reader.onload=(e)=>{
-    const data=e.target.result;
-    document.getElementById('photoPreview').src=data;
-    document.getElementById('photoPreview').style.display='block';
-    document.querySelector('.photo-upload-zone').style.display='none';
-    // store temp
-    document.getElementById('photoFileInput').dataset.tempPhoto=data;
-  };
-  reader.readAsDataURL(file);
-}
-
-// Override saveWatchDetail to also save photo
-const _origSaveWatchDetail = saveWatchDetail;
-function saveWatchDetail() {
-  const photoInput=document.getElementById('photoFileInput');
-  if(photoInput.dataset.tempPhoto && currentWatchId) {
-    watchPhotos[currentWatchId]=photoInput.dataset.tempPhoto;
-    savePhotos();
-    delete photoInput.dataset.tempPhoto;
-  }
-  _origSaveWatchDetail();
-}
-
-// Override openWatchModal to show photo
-const _origOpenWatchModal = openWatchModal;
-function openWatchModal(id) {
-  _origOpenWatchModal(id);
-  const photo=watchPhotos[id];
-  const preview=document.getElementById('photoPreview');
-  const zone=document.querySelector('.photo-upload-zone');
-  const fileInput=document.getElementById('photoFileInput');
-  delete fileInput.dataset.tempPhoto;
-  fileInput.value='';
-  if(photo){
-    preview.src=photo; preview.style.display='block'; zone.style.display='none';
-  } else {
-    preview.style.display='none'; zone.style.display='block';
-  }
-}
-
-// Override renderCatalogue to show photos on cards
-const _origRenderCatalogue = renderCatalogue;
-function renderCatalogue() {
-  syncCatalogueFromSales();
-  const grid=document.getElementById('catalogueGrid');
-  const hint=document.getElementById('dragHint');
-  const count=document.getElementById('catCount');
-  if(!watchCatalogue.length){
-    grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">⌚</div><p>Aucune vente encore.<br>Tes montres vendues apparaîtront ici.</p></div>';
-    hint.textContent=''; count.textContent=''; return;
-  }
-  count.textContent=watchCatalogue.length+' montre'+(watchCatalogue.length>1?'s':'');
-  hint.textContent=watchCatalogue.length>1?'⬆⬇ Glisse pour réordonner':'';
-  const sorted=[...watchCatalogue].sort((a,b)=>a.rank-b.rank);
-  grid.innerHTML=sorted.map((w,i)=>{
-    const rankClass=i===0?'r1':i===1?'r2':i===2?'r3':'';
-    const stars=Array.from({length:10},(_,s)=>`<span class="star ${s<w.rating?'active':''}" onclick="quickRate(${w.id},${s+1})">★</span>`).join('');
-    const tags=w.tags.map(t=>`<span class="watch-tag">${t}</span>`).join('');
-    const photo=watchPhotos[w.id];
-    const imgArea=photo?`<div class="watch-img-area"><img src="${photo}" alt="${w.name}"></div>`:`<div class="watch-img-area">⌚</div>`;
-    return `<div class="watch-card" draggable="true" data-id="${w.id}" data-idx="${i}"
-        ondragstart="onDragStart(event,${i})" ondragover="onDragOver(event)" ondrop="onDrop(event,${i})" ondragend="onDragEnd(event)"
-        onclick="openWatchModal(${w.id})">
-      <div class="watch-rank-badge ${rankClass}">${i+1}</div>
-      ${imgArea}
-      <div class="watch-card-body">
-        <div class="watch-card-name">${w.name}</div>
-        <div class="watch-stars">${stars}</div>
-        ${tags?'<div class="watch-tags">'+tags+'</div>':''}
-        <div class="watch-price">+${fmt(w.price)}</div>
-        <div class="watch-date">${fmtDate(w.date)}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
 
 // Demo stock data
 if(!stockItems.length) {
