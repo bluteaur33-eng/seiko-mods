@@ -74,7 +74,7 @@ html, body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans
 .chart-legend { display:flex; gap:10px; align-items:center; }
 .legend-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
 .legend-label { font-family:'DM Mono',monospace; font-size:0.58rem; color:var(--muted); }
-#salesChart { width:100%; height:150px; overflow:visible; }
+#salesChart { width:100%; display:block; overflow:visible; }
 
 .mini-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
 .mini-stat { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 10px; text-align:center; }
@@ -269,7 +269,7 @@ html, body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans
 .forecast-lbl { flex:1; font-size:0.82rem; font-weight:600; }
 .forecast-val { font-family:'DM Mono',monospace; font-size:0.82rem; color:var(--gold); }
 .forecast-note { font-family:'DM Mono',monospace; font-size:0.62rem; color:var(--muted); }
-#advChart { width:100%; height:150px; overflow:visible; }
+#advChart { width:100%; display:block; overflow:visible; }
 
 /* ── STOCK PAGE ── */
 .stock-header-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
@@ -396,9 +396,10 @@ input[type=file] { display:none; }
           <div class="chart-legend">
             <span class="legend-dot" style="background:var(--green)"></span><span class="legend-label">Ventes</span>
             <span class="legend-dot" style="background:var(--red);margin-left:6px"></span><span class="legend-label">Dépenses</span>
+            <span class="legend-dot" style="background:var(--gold);margin-left:6px"></span><span class="legend-label">Bénéfice</span>
           </div>
         </div>
-        <svg id="salesChart" viewBox="0 0 320 140" preserveAspectRatio="none"></svg>
+        <svg id="salesChart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160"></svg>
       </div>
 
       <div class="mini-stats">
@@ -472,7 +473,7 @@ input[type=file] { display:none; }
             <button onclick="setAdvChart('line')" id="btnLine" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:3px 8px;font-family:'DM Mono',monospace;font-size:0.58rem;cursor:pointer">LINE</button>
           </div>
         </div>
-        <svg id="advChart" viewBox="0 0 320 150" preserveAspectRatio="none"></svg>
+        <svg id="advChart" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160"></svg>
       </div>
 
       <!-- Tendances mois vs mois -->
@@ -515,6 +516,25 @@ input[type=file] { display:none; }
       <div class="stat-section">
         <div class="stat-section-title">Top plateformes de vente</div>
         <div id="platformBars"></div>
+      </div>
+
+      <!-- Répartition dépenses donut -->
+      <div class="stat-section">
+        <div class="stat-section-title">Répartition des dépenses</div>
+        <div class="chart-card" style="margin-bottom:12px">
+          <div class="donut-wrap">
+            <svg class="donut-svg" id="statsDonutChart" viewBox="0 0 100 100" width="110" height="110"></svg>
+            <div class="donut-legend" id="statsDonutLegend"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Streak & records -->
+      <div class="stat-section">
+        <div class="stat-section-title">Records & Streaks</div>
+        <div class="chart-card" style="padding:0;overflow:hidden">
+          <div id="streakRows"></div>
+        </div>
       </div>
     </div>
 
@@ -900,6 +920,9 @@ const CAT = {
 };
 
 let entries = JSON.parse(localStorage.getItem('seiko_entries') || '[]');
+// IDs supprimés volontairement — ne jamais réinjecter
+let deletedIds = new Set(JSON.parse(localStorage.getItem('seiko_deleted_ids') || '[]'));
+function saveDeletedIds() { localStorage.setItem('seiko_deleted_ids', JSON.stringify([...deletedIds])); }
 let editMode = false;
 let selectedCat = 'Vente';
 let currentPeriod = 7;
@@ -933,6 +956,7 @@ function buildSyncPayload() {
     catalogue: watchCatalogue,
     costs:     watchCosts,
     reminders,
+    deletedIds: [...deletedIds],
     photos:    includePhotos ? photosData : null,
     photosOmitted: !includePhotos,
     updated:   new Date().toISOString(),
@@ -943,7 +967,14 @@ function buildSyncPayload() {
 function applyDrivePayload(data) {
   let changed = false;
   if (Array.isArray(data.entries) && data.entries.length > 0) {
-    entries = data.entries; save(); changed = true;
+    // Fusionner les deletedIds depuis Drive
+    if (Array.isArray(data.deletedIds)) {
+      data.deletedIds.forEach(id => deletedIds.add(id));
+      saveDeletedIds();
+    }
+    // Filtrer les entrées supprimées
+    entries = data.entries.filter(e => !deletedIds.has(e.id));
+    save(); changed = true;
   }
   if (Array.isArray(data.stock)) {
     stockItems = data.stock; saveStock(); changed = true;
@@ -1197,24 +1228,36 @@ function toggleEdit() {
 }
 
 function deleteEntry(id) {
-  entries=entries.filter(e=>e.id!==id); save(); render(); toast('🗑 Transaction supprimée');
+  entries=entries.filter(e=>e.id!==id);
+  deletedIds.add(id);
+  saveDeletedIds();
+  save(); render(); toast('🗑 Transaction supprimée');
   scheduleSyncAfterEdit();
 }
 
+// Courbe lisse Catmull-Rom clampée — ne sort jamais des bornes Y
 function smoothPath(pts) {
-  if(pts.length<2) return '';
-  let d=`M${pts[0][0]},${pts[0][1]}`;
+  if(pts.length===0) return '';
+  if(pts.length===1) return `M${pts[0][0]},${pts[0][1]}`;
+  if(pts.length===2) return `M${pts[0][0]},${pts[0][1]} L${pts[1][0]},${pts[1][1]}`;
+  let d=`M${pts[0][0].toFixed(2)},${pts[0][1].toFixed(2)}`;
   for(let i=1;i<pts.length;i++){
-    const prev=pts[i-1],cur=pts[i];
-    const cpx=(prev[0]+cur[0])/2;
-    d+=` C${cpx},${prev[1]} ${cpx},${cur[1]} ${cur[0]},${cur[1]}`;
+    const p0=pts[Math.max(0,i-2)];
+    const p1=pts[i-1];
+    const p2=pts[i];
+    const p3=pts[Math.min(pts.length-1,i+1)];
+    const cp1x=p1[0]+(p2[0]-p0[0])/6;
+    const cp1y=p1[1]+(p2[1]-p0[1])/6;
+    const cp2x=p2[0]-(p3[0]-p1[0])/6;
+    const cp2y=p2[1]-(p3[1]-p1[1])/6;
+    d+=` C${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
   }
   return d;
 }
 
 function buildSalesChart(filtered) {
   const svg=document.getElementById('salesChart');
-  const W=320,H=150,PL=40,PR=12,PT=12,PB=26;
+  const W=320,H=160,PL=44,PR=12,PT=14,PB=30;
   const cW=W-PL-PR, cH=H-PT-PB;
   const byDate={};
   filtered.forEach(e=>{
@@ -1223,76 +1266,82 @@ function buildSalesChart(filtered) {
     else byDate[e.date].costs+=e.amount;
   });
   let dates=Object.keys(byDate).sort();
-  if(!dates.length){svg.innerHTML=`<text x="160" y="75" text-anchor="middle" font-family="DM Mono,monospace" font-size="11" fill="#888892">Aucune donnée sur la période</text>`;return;}
+  if(!dates.length){svg.innerHTML=`<text x="160" y="80" text-anchor="middle" font-family="DM Mono,monospace" font-size="11" fill="#888892">Aucune donnée sur la période</text>`;return;}
   if(dates.length===1) dates=[dates[0],dates[0]];
   const sv=dates.map(d=>byDate[d]?.sales||0);
   const cv=dates.map(d=>byDate[d]?.costs||0);
-  const maxV=Math.max(...sv,...cv,1);
+  const pv=dates.map((_,i)=>sv[i]-cv[i]); // profit net
+  const maxV=Math.max(...sv,...cv,...pv.map(Math.abs),1);
   const xS=i=>PL+(i/(dates.length-1||1))*cW;
   const yS=v=>PT+cH-(v/maxV)*cH;
   const ptsSales=dates.map((_,i)=>[xS(i),yS(sv[i])]);
   const ptsCosts=dates.map((_,i)=>[xS(i),yS(cv[i])]);
+  const ptsProfit=dates.map((_,i)=>[xS(i),yS(pv[i])]);
 
-  // Y axis nice ticks
-  const niceMax = Math.ceil(maxV/50)*50;
+  // Y ticks
+  const niceMax=Math.ceil(maxV/50)*50;
   const ticks=[0, niceMax*0.5, niceMax];
-  const yLabels=ticks.map(v=>`<text x="${PL-5}" y="${yS(v/niceMax*maxV)+4}" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#666672">${fmtShort(v/niceMax*maxV)}</text>`).join('');
-  const grid=ticks.map(v=>`<line x1="${PL}" y1="${yS(v/niceMax*maxV)}" x2="${W-PR}" y2="${yS(v/niceMax*maxV)}" stroke="#222226" stroke-width="1" stroke-dasharray="3,3"/>`).join('');
+  const yLabels=ticks.map(v=>`<text x="${PL-6}" y="${yS(v/niceMax*maxV)+4}" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#555560">${fmtShort(v/niceMax*maxV)}</text>`).join('');
+  const grid=ticks.map(v=>`<line x1="${PL}" y1="${yS(v/niceMax*maxV)}" x2="${W-PR}" y2="${yS(v/niceMax*maxV)}" stroke="#1e1e22" stroke-width="1" stroke-dasharray="4,3"/>`).join('');
+  // Zero line
+  const zeroLine=`<line x1="${PL}" y1="${yS(0)}" x2="${W-PR}" y2="${yS(0)}" stroke="#333340" stroke-width="1"/>`;
 
-  // X axis: pick evenly spaced labels (max 4)
-  const xLabelCount=Math.min(dates.length,4);
-  const xLabelIndices=[...new Set([0,...Array.from({length:xLabelCount-2},(_, k)=>Math.round((k+1)*(dates.length-1)/(xLabelCount-1))),dates.length-1])];
+  // X labels
+  const xLabelCount=Math.min(dates.length,5);
+  const xLabelIndices=[...new Set([0,...Array.from({length:xLabelCount-2},(_,k)=>Math.round((k+1)*(dates.length-1)/(xLabelCount-1))),dates.length-1])];
   const xLabels=xLabelIndices.map(i=>{
     const p=dates[i].split('-');
     const lbl=`${p[2]}/${p[1]}`;
     const anchor=i===0?'start':i===dates.length-1?'end':'middle';
-    return `<text x="${xS(i)}" y="${H-6}" text-anchor="${anchor}" font-family="DM Mono,monospace" font-size="7.5" fill="#666672">${lbl}</text>`;
+    return `<text x="${xS(i)}" y="${H-8}" text-anchor="${anchor}" font-family="DM Mono,monospace" font-size="7.5" fill="#555560">${lbl}</text>`;
   }).join('');
 
-  // Smooth paths
+  // Paths
+  const bottom=PT+cH; // bas du graphe, toujours dans les limites
   const salesPathD=smoothPath(ptsSales);
   const costsPathD=smoothPath(ptsCosts);
+  const profitPathD=smoothPath(ptsProfit);
+  const salesAreaD=`${salesPathD} L${xS(dates.length-1)},${bottom} L${xS(0)},${bottom} Z`;
+  const costsAreaD=`${costsPathD} L${xS(dates.length-1)},${bottom} L${xS(0)},${bottom} Z`;
 
-  // Area fills
-  const salesAreaD=`${salesPathD} L${xS(dates.length-1)},${PT+cH} L${xS(0)},${PT+cH} Z`;
-  const costsAreaD=`${costsPathD} L${xS(dates.length-1)},${PT+cH} L${xS(0)},${PT+cH} Z`;
-
-  // Gradient defs
   const defs=`<defs>
-    <linearGradient id="gSales" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#4caf7d" stop-opacity="0.25"/>
+    <linearGradient id="sc_gSales" gradientUnits="userSpaceOnUse" x1="0" y1="${PT}" x2="0" y2="${bottom}">
+      <stop offset="0%" stop-color="#4caf7d" stop-opacity="0.22"/>
       <stop offset="100%" stop-color="#4caf7d" stop-opacity="0.02"/>
     </linearGradient>
-    <linearGradient id="gCosts" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#e05555" stop-opacity="0.18"/>
+    <linearGradient id="sc_gCosts" gradientUnits="userSpaceOnUse" x1="0" y1="${PT}" x2="0" y2="${bottom}">
+      <stop offset="0%" stop-color="#e05555" stop-opacity="0.16"/>
       <stop offset="100%" stop-color="#e05555" stop-opacity="0.02"/>
     </linearGradient>
+    <clipPath id="sc_clip">
+      <rect x="${PL}" y="${PT}" width="${cW}" height="${cH}"/>
+    </clipPath>
   </defs>`;
 
-  // Interactive dots with titles (tooltip on hover/tap)
+  // Interactive dots avec tooltips natifs
   const dotsSales=ptsSales.map((pt,i)=>`
-    <circle cx="${pt[0]}" cy="${pt[1]}" r="4" fill="#4caf7d" stroke="#0e0e0f" stroke-width="2">
-      <title>${fmtDate(dates[i])} · +${fmt(sv[i])}</title>
+    <circle cx="${pt[0]}" cy="${pt[1]}" r="4.5" fill="#4caf7d" stroke="#0e0e0f" stroke-width="2" style="cursor:pointer">
+      <title>${fmtDate(dates[i])}\nVentes : +${fmt(sv[i])}</title>
     </circle>`).join('');
-  const dotsCosts=ptsCosts.filter((_,i)=>cv[i]>0).map((pt,i)=>{
-    const ri=ptsCosts.indexOf(pt);
-    return `<circle cx="${pt[0]}" cy="${pt[1]}" r="3" fill="#e05555" stroke="#0e0e0f" stroke-width="1.5">
-      <title>${fmtDate(dates[ri])} · −${fmt(cv[ri])}</title>
-    </circle>`;
-  }).join('');
-
-  // Last value labels
-  const lastSale=sv[sv.length-1];
-  const lastX=xS(dates.length-1), lastY=yS(lastSale);
-  const saleLabel=lastSale>0?`<text x="${lastX-3}" y="${lastY-8}" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#4caf7d" font-weight="500">+${fmtShort(lastSale)}</text>`:'';
+  const dotsCosts=ptsCosts.filter((_,i)=>cv[i]>0).map((pt,i)=>`
+    <circle cx="${pt[0]}" cy="${pt[1]}" r="3.5" fill="#e05555" stroke="#0e0e0f" stroke-width="1.5" style="cursor:pointer">
+      <title>${fmtDate(dates[ptsCosts.indexOf(pt)])}\nDépenses : −${fmt(cv[ptsCosts.indexOf(pt)])}</title>
+    </circle>`).join('');
+  const dotsProfit=ptsProfit.map((pt,i)=>`
+    <circle cx="${pt[0]}" cy="${pt[1]}" r="3" fill="${pv[i]>=0?'#c8a96e':'#e05555'}" stroke="#0e0e0f" stroke-width="1.5" style="cursor:pointer">
+      <title>${fmtDate(dates[i])}\nBénéfice : ${pv[i]>=0?'+':''}${fmt(pv[i])}</title>
+    </circle>`).join('');
 
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
-  svg.innerHTML=`${defs}${grid}${yLabels}${xLabels}
-    <path d="${costsAreaD}" fill="url(#gCosts)"/>
-    <path d="${salesAreaD}" fill="url(#gSales)"/>
-    <path d="${costsPathD}" fill="none" stroke="#e05555" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>
-    <path d="${salesPathD}" fill="none" stroke="#4caf7d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-    ${dotsCosts}${dotsSales}${saleLabel}`;
+  svg.innerHTML=`${defs}${grid}${zeroLine}${yLabels}${xLabels}
+    <g clip-path="url(#sc_clip)">
+      <path d="${costsAreaD}" fill="url(#sc_gCosts)"/>
+      <path d="${salesAreaD}" fill="url(#sc_gSales)"/>
+      <path d="${costsPathD}" fill="none" stroke="#e05555" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.8"/>
+      <path d="${salesPathD}" fill="none" stroke="#4caf7d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="${profitPathD}" fill="none" stroke="#c8a96e" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5,3" opacity="0.9"/>
+    </g>
+    ${dotsCosts}${dotsSales}${dotsProfit}`;
 }
 
 function buildDonutChart() {
@@ -1525,7 +1574,7 @@ function exportCSV() {
 
 function clearData() {
   if(!confirm('Effacer toutes les données ? Cette action est irréversible.')) return;
-  entries=[]; save(); render(); toast('🗑 Données effacées');
+  entries=[]; deletedIds=new Set(); saveDeletedIds(); save(); render(); toast('🗑 Données effacées');
 }
 
 
@@ -1831,16 +1880,26 @@ function renderStats() {
   const pProfit=pRev-pCosts;
   const pVentes=prev.filter(e=>e.cat==='Vente');
 
-  // KPI 3 cols
+  // KPI 3 cols — maintenant 8 KPIs
   const days=statsPeriod||90;
   const revPerDay=rev/days, ventePerWeek=ventes.length/(days/7);
+  // Meilleur mois
+  const byM=groupByMonth(entries);
+  const bestMonth=Object.entries(byM).sort((a,b)=>b[1].rev-a[1].rev)[0];
+  const bestMonthLbl=bestMonth?bestMonth[0].slice(0,7):'—';
+  const bestMonthVal=bestMonth?bestMonth[1].rev:0;
+  // Taux de rentabilité
+  const rentabilite=ventes.length>0?(ventes.filter(v=>{const cost=watchCosts[v.id];if(!cost)return false;const tc=(cost.pieces||0)+(cost.shipping||0)+(cost.material||0)+(cost.other||0);return v.amount>tc;}).length/ventes.length*100):0;
   document.getElementById('statsKpi3').innerHTML=`
     <div class="kpi3"><div class="kpi3-val" style="color:var(--green)">${fmtShort(rev)}</div><div class="kpi3-lbl">CA période</div></div>
     <div class="kpi3"><div class="kpi3-val" style="color:var(--gold)">${fmtShort(profit)}</div><div class="kpi3-lbl">Bénéfice</div></div>
     <div class="kpi3"><div class="kpi3-val" style="color:var(--blue)">${ventePerWeek.toFixed(1)}</div><div class="kpi3-lbl">Ventes/sem</div></div>
     <div class="kpi3"><div class="kpi3-val" style="color:var(--purple)">${rev>0?((profit/rev)*100).toFixed(0)+'%':'—'}</div><div class="kpi3-lbl">Marge nette</div></div>
     <div class="kpi3"><div class="kpi3-val" style="color:var(--orange)">${ventes.length>0?fmtShort(rev/ventes.length):'—'}</div><div class="kpi3-lbl">Panier moy.</div></div>
-    <div class="kpi3"><div class="kpi3-val" style="color:var(--text)">${fmtShort(revPerDay)}</div><div class="kpi3-lbl">CA/jour</div></div>`;
+    <div class="kpi3"><div class="kpi3-val" style="color:var(--text)">${fmtShort(revPerDay)}</div><div class="kpi3-lbl">CA/jour</div></div>
+    <div class="kpi3" title="Meilleur mois : ${bestMonthLbl}"><div class="kpi3-val" style="color:var(--gold);font-size:0.9rem">${fmtShort(bestMonthVal)}</div><div class="kpi3-lbl">Record mois</div></div>
+    <div class="kpi3"><div class="kpi3-val" style="color:var(--green)">${ventes.length}</div><div class="kpi3-lbl">Nb ventes</div></div>
+    <div class="kpi3"><div class="kpi3-val" style="color:${costs>0?'var(--red)':'var(--muted)'}">${fmtShort(costs)}</div><div class="kpi3-lbl">Dépenses</div></div>`;
 
   // Tendances
   function trendBadge(cur,old) {
@@ -1865,72 +1924,142 @@ function renderStats() {
   // Prévisions
   buildForecast(f, ventes);
 
-  // Plateformes
-  buildPlatforms(ventes);
+  // Répartition dépenses (donut stats page)
+  buildStatsDonut(f);
+
+  // Streak & records
+  buildStreakRows(f, ventes);
+}
+
+function buildStatsDonut(f) {
+  const depCats=['Pièces','Expédition','Matériel','Autre'];
+  const colors=['#5b9cf6','#e8925a','#9b7fe8','#c8a96e'];
+  const data=depCats.map((cat,i)=>({cat,color:colors[i],val:f.filter(e=>e.cat===cat).reduce((s,e)=>s+e.amount,0)})).filter(d=>d.val>0);
+  const total=data.reduce((s,d)=>s+d.val,0);
+  const svg=document.getElementById('statsDonutChart');
+  const leg=document.getElementById('statsDonutLegend');
+  if(!svg||!leg) return;
+  if(!total){svg.innerHTML=`<text x="50" y="54" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#888892">Aucune dépense</text>`;leg.innerHTML='';return;}
+  const cx=50,cy=50,r=36,ir=22;
+  let sa=-Math.PI/2, paths='';
+  data.forEach(d=>{
+    const ang=(d.val/total)*2*Math.PI, ea=sa+ang;
+    const x1=cx+r*Math.cos(sa),y1=cy+r*Math.sin(sa);
+    const x2=cx+r*Math.cos(ea),y2=cy+r*Math.sin(ea);
+    const ix1=cx+ir*Math.cos(ea),iy1=cy+ir*Math.sin(ea);
+    const ix2=cx+ir*Math.cos(sa),iy2=cy+ir*Math.sin(sa);
+    const lg=ang>Math.PI?1:0;
+    paths+=`<path d="M${x1},${y1} A${r},${r} 0 ${lg},1 ${x2},${y2} L${ix1},${iy1} A${ir},${ir} 0 ${lg},0 ${ix2},${iy2} Z" fill="${d.color}"><title>${d.cat}: ${fmt(d.val)} (${(d.val/total*100).toFixed(0)}%)</title></path>`;
+    sa=ea;
+  });
+  svg.innerHTML=paths+`<text x="${cx}" y="${cy-4}" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="12" fill="#e8e8ec">${fmtShort(total)}</text><text x="${cx}" y="${cy+9}" text-anchor="middle" font-family="DM Mono,monospace" font-size="6" fill="#888892">DÉPENSES</text>`;
+  leg.innerHTML=data.map(d=>`<div class="donut-legend-item"><div class="donut-dot" style="background:${d.color}"></div><div class="donut-lbl">${d.cat}</div><div class="donut-val">${(d.val/total*100).toFixed(0)}%</div></div>`).join('');
+}
+
+function buildStreakRows(f, ventes) {
+  const el=document.getElementById('streakRows');
+  if(!el) return;
+  // Streak jours consécutifs avec au moins 1 vente
+  const salesDates=new Set(ventes.map(v=>v.date));
+  let streak=0, maxStreak=0, cur=0;
+  const today=new Date();
+  for(let i=0;i<365;i++){
+    const d=new Date(today); d.setDate(d.getDate()-i);
+    const ds=d.toISOString().split('T')[0];
+    if(salesDates.has(ds)) { cur++; if(i===0||i===streak) streak=cur; maxStreak=Math.max(maxStreak,cur); }
+    else { if(i<streak) streak=0; cur=0; }
+  }
+  // Meilleure vente all-time
+  const bestSale=entries.filter(e=>e.cat==='Vente').sort((a,b)=>b.amount-a.amount)[0];
+  // Meilleur mois
+  const byM=groupByMonth(entries);
+  const bestM=Object.entries(byM).sort((a,b)=>b[1].rev-a[1].rev)[0];
+  const rows=[
+    {icon:'🔥',label:'Streak actuel',val:streak+' jour'+(streak>1?'s':''),note:'ventes consécutives'},
+    {icon:'🏆',label:'Meilleur streak',val:maxStreak+' jour'+(maxStreak>1?'s':''),note:'record toutes périodes'},
+    {icon:'💎',label:'Meilleure vente',val:bestSale?fmt(bestSale.amount):'—',note:bestSale?bestSale.desc.slice(0,28):''},
+    {icon:'📅',label:'Meilleur mois',val:bestM?fmtShort(bestM[1].rev):'—',note:bestM?bestM[0]:''},
+  ];
+  el.innerHTML=rows.map(r=>`<div class="forecast-line">
+    <div style="display:flex;align-items:center;gap:10px;flex:1">
+      <span style="font-size:1.1rem">${r.icon}</span>
+      <div><div class="forecast-lbl">${r.label}</div><div class="forecast-note">${r.note}</div></div>
+    </div>
+    <div class="forecast-val">${r.val}</div>
+  </div>`).join('');
 }
 
 function buildAdvChart(f) {
   const svg=document.getElementById('advChart');
-  const W=320,H=155,PL=40,PR=10,PT=12,PB=26;
+  const W=320,H=160,PL=44,PR=10,PT=14,PB=30;
   const cW=W-PL-PR, cH=H-PT-PB;
   const byMonth=groupByMonth(f);
   const months=Object.keys(byMonth).sort();
   if(!months.length){svg.innerHTML=`<text x="160" y="80" text-anchor="middle" font-family="DM Mono,monospace" font-size="11" fill="#888892">Aucune donnée</text>`;return;}
   const revVals=months.map(m=>byMonth[m].rev);
   const costVals=months.map(m=>byMonth[m].costs);
+  const profitVals=months.map(m=>byMonth[m].rev-byMonth[m].costs);
   const maxV=Math.max(...revVals,...costVals,1);
   const niceMax=Math.ceil(maxV/50)*50||50;
   const xS=i=>PL+(i+0.5)*(cW/months.length);
   const yS=v=>PT+cH-(v/niceMax)*cH;
-  const bW=Math.max(5,Math.min(16,cW/months.length*0.35));
+  const bW=Math.max(5,Math.min(14,cW/months.length*0.32));
   const ticks=[0,niceMax*0.5,niceMax];
-  const grid=ticks.map(v=>`<line x1="${PL}" y1="${yS(v)}" x2="${W-PR}" y2="${yS(v)}" stroke="#222226" stroke-width="1" stroke-dasharray="3,3"/>`).join('');
-  const yLbl=ticks.map(v=>`<text x="${PL-5}" y="${yS(v)+4}" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#666672">${fmtShort(v)}</text>`).join('');
-
-  // X labels: show all months if ≤6, else every other
+  const grid=ticks.map(v=>`<line x1="${PL}" y1="${yS(v)}" x2="${W-PR}" y2="${yS(v)}" stroke="#1e1e22" stroke-width="1" stroke-dasharray="4,3"/>`).join('');
+  const yLbl=ticks.map(v=>`<text x="${PL-6}" y="${yS(v)+4}" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#555560">${fmtShort(v)}</text>`).join('');
+  const mNames=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
   const xLbl=months.map((m,i)=>{
-    if(months.length>6 && i%2!==0) return '';
-    const p=m.split('-');
-    const mNames=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
-    const lbl=mNames[parseInt(p[1])-1]||p[1];
-    return `<text x="${xS(i)}" y="${H-6}" text-anchor="middle" font-family="DM Mono,monospace" font-size="7.5" fill="#666672">${lbl}</text>`;
+    if(months.length>8 && i%2!==0) return '';
+    const p=m.split('-'); const lbl=mNames[parseInt(p[1])-1]||p[1];
+    return `<text x="${xS(i)}" y="${H-8}" text-anchor="middle" font-family="DM Mono,monospace" font-size="7.5" fill="#555560">${lbl}</text>`;
   }).join('');
 
   const defs=`<defs>
-    <linearGradient id="ga1" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="ac_ga1" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#4caf7d" stop-opacity="0.3"/>
       <stop offset="100%" stop-color="#4caf7d" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="ga2" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="ac_ga2" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#e05555" stop-opacity="0.2"/>
       <stop offset="100%" stop-color="#e05555" stop-opacity="0"/>
     </linearGradient>
+    <clipPath id="ac_clip">
+      <rect x="${PL}" y="${PT}" width="${cW}" height="${cH}"/>
+    </clipPath>
   </defs>`;
 
   let content='';
   if(advChartMode==='bar') {
-    content=months.map((m,i)=>{
-      const rv=revVals[i],cv=costVals[i];
-      const gap=3;
+    const bars=months.map((m,i)=>{
+      const rv=revVals[i],cv=costVals[i],pv=profitVals[i];
+      const gap=2;
       const rvH=Math.max(2,(rv/niceMax)*cH), cvH=Math.max(2,(cv/niceMax)*cH);
-      const rvY=PT+cH-rvH, cvY=PT+cH-cvH;
-      return `<rect x="${xS(i)-bW-gap/2}" y="${rvY}" width="${bW}" height="${rvH}" fill="#4caf7d" rx="3">
-        <title>${m}: +${fmt(rv)}</title></rect>
-        <rect x="${xS(i)+gap/2}" y="${cvY}" width="${bW}" height="${cvH}" fill="#e05555" rx="3" opacity="0.8">
-        <title>${m}: −${fmt(cv)}</title></rect>`;
+      const pvH=Math.max(1,(Math.abs(pv)/niceMax)*cH);
+      const rvY=PT+cH-rvH, cvY=PT+cH-cvH, pvY=PT+cH-pvH;
+      return `<rect x="${xS(i)-bW-gap}" y="${rvY}" width="${bW}" height="${rvH}" fill="#4caf7d" rx="2">
+        <title>${m}\nVentes : +${fmt(rv)}\nDépenses : −${fmt(cv)}\nBénéfice : ${pv>=0?'+':''}${fmt(pv)}</title></rect>
+        <rect x="${xS(i)}" y="${cvY}" width="${bW}" height="${cvH}" fill="#e05555" rx="2" opacity="0.82">
+        <title>${m}\nDépenses : −${fmt(cv)}</title></rect>
+        <rect x="${xS(i)-bW/2}" y="${pvY}" width="${bW*0.5}" height="${pvH}" fill="${pv>=0?'#c8a96e':'#e05555'}" rx="2" opacity="0.5">
+        <title>Bénéfice : ${pv>=0?'+':''}${fmt(pv)}</title></rect>`;
     }).join('');
+    content=`<g clip-path="url(#ac_clip)">${bars}</g>`;
   } else {
     const pts1=months.map((_,i)=>[xS(i),yS(revVals[i])]);
     const pts2=months.map((_,i)=>[xS(i),yS(costVals[i])]);
-    const p1=smoothPath(pts1), p2=smoothPath(pts2);
+    const pts3=months.map((_,i)=>[xS(i),yS(profitVals[i])]);
+    const p1=smoothPath(pts1), p2=smoothPath(pts2), p3=smoothPath(pts3);
     const a1=`${p1} L${xS(months.length-1)},${PT+cH} L${xS(0)},${PT+cH} Z`;
     const a2=`${p2} L${xS(months.length-1)},${PT+cH} L${xS(0)},${PT+cH} Z`;
-    const dots1=pts1.map((pt,i)=>`<circle cx="${pt[0]}" cy="${pt[1]}" r="3.5" fill="#4caf7d" stroke="#0e0e0f" stroke-width="1.5"><title>${months[i]}: +${fmt(revVals[i])}</title></circle>`).join('');
-    const dots2=pts2.filter((_,i)=>costVals[i]>0).map((pt,i)=>`<circle cx="${pt[0]}" cy="${pt[1]}" r="3" fill="#e05555" stroke="#0e0e0f" stroke-width="1.5"/>`).join('');
-    content=`<path d="${a2}" fill="url(#ga2)"/><path d="${a1}" fill="url(#ga1)"/>
+    const dots1=pts1.map((pt,i)=>`<circle cx="${pt[0]}" cy="${pt[1]}" r="3.5" fill="#4caf7d" stroke="#0e0e0f" stroke-width="1.5"><title>${months[i]}\n+${fmt(revVals[i])}</title></circle>`).join('');
+    const dots2=pts2.filter((_,i)=>costVals[i]>0).map((pt,i)=>`<circle cx="${pt[0]}" cy="${pt[1]}" r="3" fill="#e05555" stroke="#0e0e0f" stroke-width="1.5"><title>${months[i]}\n−${fmt(costVals[i])}</title></circle>`).join('');
+    const dots3=pts3.map((pt,i)=>`<circle cx="${pt[0]}" cy="${pt[1]}" r="2.5" fill="${profitVals[i]>=0?'#c8a96e':'#e05555'}" stroke="#0e0e0f" stroke-width="1.2"><title>Bénéfice ${months[i]}: ${profitVals[i]>=0?'+':''}${fmt(profitVals[i])}</title></circle>`).join('');
+    content=`<g clip-path="url(#ac_clip)">
+      <path d="${a2}" fill="url(#ac_ga2)"/><path d="${a1}" fill="url(#ac_ga1)"/>
       <path d="${p2}" fill="none" stroke="#e05555" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>
       <path d="${p1}" fill="none" stroke="#4caf7d" stroke-width="2.2" stroke-linecap="round"/>
-      ${dots2}${dots1}`;
+      <path d="${p3}" fill="none" stroke="#c8a96e" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="5,3" opacity="0.9"/>
+    </g>${dots2}${dots1}${dots3}`;
   }
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   svg.innerHTML=`${defs}${grid}${yLbl}${xLbl}${content}`;
@@ -1939,19 +2068,23 @@ function buildAdvChart(f) {
 function buildHeatmap() {
   const grid=document.getElementById('heatmapGrid');
   const today=new Date();
-  // 12 weeks = 84 days
   const cells=[];
   for(let i=83;i>=0;i--) {
     const d=new Date(today); d.setDate(d.getDate()-i);
+    if(d>today) { cells.push(`<div class="heat-cell" style="opacity:0.15"></div>`); continue; }
     const ds=d.toISOString().split('T')[0];
     const dayEntries=entries.filter(e=>e.date===ds);
     const total=dayEntries.reduce((s,e)=>s+(e.cat==='Vente'?e.amount:0),0);
+    const costs=dayEntries.reduce((s,e)=>s+(e.cat!=='Vente'?e.amount:0),0);
     let lvl='';
     if(total>0&&total<100) lvl='h1';
     else if(total>=100&&total<200) lvl='h2';
     else if(total>=200&&total<300) lvl='h3';
     else if(total>=300) lvl='h4';
-    cells.push(`<div class="heat-cell ${lvl}" title="${ds}: ${total?fmt(total):'Aucune vente'}"></div>`);
+    const dNames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    const dayName=dNames[d.getDay()];
+    const tooltip=total>0?`${ds} (${dayName}) — +${fmt(total)}${costs>0?' / dép. −'+fmt(costs):''}`:costs>0?`${ds} — dép. −${fmt(costs)}`:`${ds} — aucune vente`;
+    cells.push(`<div class="heat-cell ${lvl}" title="${tooltip}"></div>`);
   }
   grid.innerHTML=cells.join('');
 }
@@ -2602,10 +2735,10 @@ if(!stockItems.length) {
   saveStock();
 }
 
-// Inject CSV data from 2026-05-25 import (always add if not already present)
+// Inject CSV data from 2026-05-25 import (only add if not already present AND not deleted)
 (function() {
   const csvIds = [2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020];
-  const existing = entries.map(e => e.id);
+  const existing = new Set(entries.map(e => e.id));
   const toAdd = [
     {id:2000,date:'2026-05-22',cat:'Autre',desc:'Ebook seiko mod',amount:49.99,note:''},
     {id:2001,date:'2026-05-24',cat:'Expédition',desc:'Commande 2 bracelets, 1 cadran, 1 NH35 aiguilles…',amount:18.31,note:'Sugargoo'},
@@ -2628,7 +2761,7 @@ if(!stockItems.length) {
     {id:2018,date:'2026-05-24',cat:'Matériel',desc:'Gants de protection pour l\'assemblage',amount:1.61,note:'AliExpress'},
     {id:2019,date:'2026-05-24',cat:'Matériel',desc:'Pied à coulisse',amount:3.19,note:'AliExpress'},
     {id:2020,date:'2026-05-24',cat:'Matériel',desc:'Boîte de montre noire',amount:1.86,note:'AliExpress'}
-  ].filter(e => !existing.includes(e.id));
+  ].filter(e => !existing.has(e.id) && !deletedIds.has(e.id)); // ← respecte les suppressions
   if(toAdd.length) {
     entries = toAdd.concat(entries);
     save();
