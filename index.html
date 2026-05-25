@@ -28,7 +28,11 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; }
+/* Réactiver la sélection dans les champs de saisie */
+input, textarea, [contenteditable] { user-select:text; -webkit-user-select:text; }
+/* Bloquer le menu contextuel iOS sur les éléments interactifs */
+button, .nav-btn, .period-chip, .filter-chip, .cat-chip, .type-chip, .tag-opt, .tx-card, .stock-card, .watch-card, .kpi-card, .reminder-card, .qty-btn, .star, .star-lg { -webkit-touch-callout:none; }
 html, body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; height:100%; overflow:hidden; overscroll-behavior:none; }
 #app { display:flex; flex-direction:column; height:100vh; height:100dvh; }
 
@@ -70,7 +74,7 @@ html, body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans
 .chart-legend { display:flex; gap:10px; align-items:center; }
 .legend-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
 .legend-label { font-family:'DM Mono',monospace; font-size:0.58rem; color:var(--muted); }
-#salesChart { width:100%; height:140px; overflow:visible; }
+#salesChart { width:100%; height:150px; overflow:visible; }
 
 .mini-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
 .mini-stat { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 10px; text-align:center; }
@@ -302,6 +306,58 @@ html, body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans
 .photo-upload-zone:hover { border-color:var(--gold); }
 .photo-upload-zone p { font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--muted); margin-top:6px; }
 input[type=file] { display:none; }
+
+/* ── PRIX DE REVIENT ── */
+.cost-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:6px; font-family:'DM Mono',monospace; font-size:0.62rem; font-weight:600; }
+.cost-badge.profit  { background:rgba(76,175,125,0.15);  color:var(--green); }
+.cost-badge.loss    { background:rgba(224,85,85,0.15);   color:var(--red); }
+.cost-badge.neutral { background:rgba(200,169,110,0.15); color:var(--gold); }
+.cost-row { display:flex; align-items:center; justify-content:space-between; padding:11px 14px; border-bottom:1px solid var(--border); }
+.cost-row:last-child { border-bottom:none; }
+.cost-label { font-size:0.82rem; font-weight:600; }
+.cost-sub   { font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--muted); margin-top:2px; }
+.cost-val   { font-family:'DM Mono',monospace; font-size:0.85rem; font-weight:600; text-align:right; }
+.revient-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:12px; }
+.revient-header  { padding:12px 14px; background:var(--surface2); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.revient-title   { font-family:'DM Mono',monospace; font-size:0.65rem; letter-spacing:1px; text-transform:uppercase; color:var(--muted); }
+.revient-total   { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; color:var(--gold); letter-spacing:1px; }
+.revient-global  { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; display:flex; align-items:center; gap:16px; }
+.revient-big     { flex:1; }
+.revient-big-val { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:1px; line-height:1; }
+.revient-big-lbl { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--muted); margin-top:4px; letter-spacing:1px; }
+
+/* ── RAPPELS ── */
+.reminder-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:8px; display:flex; gap:12px; align-items:flex-start; animation:slideIn 0.2s ease; position:relative; }
+.reminder-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+.reminder-info { flex:1; min-width:0; }
+.reminder-title { font-size:0.88rem; font-weight:600; margin-bottom:3px; }
+.reminder-due   { font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--muted); margin-bottom:6px; }
+.reminder-due.overdue { color:var(--red); }
+.reminder-due.today   { color:var(--orange); font-weight:600; }
+.reminder-due.soon    { color:var(--gold); }
+.reminder-actions { display:flex; gap:6px; }
+.reminder-done-btn { background:none; border:1px solid var(--border); color:var(--muted); font-size:0.72rem; cursor:pointer; padding:4px 10px; border-radius:6px; font-family:'DM Mono',monospace; }
+.reminder-done-btn:active { background:rgba(76,175,125,0.15); color:var(--green); border-color:var(--green); }
+.reminder-del-btn { background:none; border:1px solid rgba(224,85,85,0.2); color:var(--red); font-size:0.72rem; cursor:pointer; padding:4px 10px; border-radius:6px; font-family:'DM Mono',monospace; }
+.notif-banner { background:rgba(232,146,90,0.12); border:1px solid rgba(232,146,90,0.3); border-radius:10px; padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; gap:10px; font-size:0.82rem; color:var(--orange); cursor:pointer; }
+.type-picker { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.type-chip { background:var(--surface2); border:2px solid var(--border); border-radius:10px; padding:10px 6px; cursor:pointer; text-align:center; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.type-chip .chip-icon { font-size:1.1rem; }
+.type-chip .chip-label { font-family:'DM Mono',monospace; font-size:0.55rem; color:var(--muted); }
+.type-chip.selected { border-color:var(--gold); background:rgba(200,169,110,0.12); }
+.type-chip.selected .chip-label { color:var(--gold); }
+.reminder-count-badge { position:absolute; top:-4px; right:-4px; width:16px; height:16px; border-radius:50%; background:var(--red); color:#fff; font-size:0.55rem; font-weight:700; display:flex; align-items:center; justify-content:center; }
+
+/* ── GRAPHIQUES ENRICHIS ── */
+.chart-tabs { display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; scrollbar-width:none; }
+.chart-tabs::-webkit-scrollbar { display:none; }
+.chart-tab { flex-shrink:0; padding:7px 12px; background:var(--surface2); border:1px solid var(--border); color:var(--muted); border-radius:8px; font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.5px; cursor:pointer; text-align:center; transition:all 0.15s; }
+.chart-tab.active { background:rgba(200,169,110,0.15); border-color:var(--gold); color:var(--gold); }
+.sparkline-row { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--border); }
+.sparkline-row:last-child { border-bottom:none; }
+.spark-info { flex:1; }
+.spark-label { font-size:0.84rem; font-weight:600; }
+.spark-val   { font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--muted); margin-top:2px; }
 </style>
 </head>
 <body>
@@ -310,7 +366,7 @@ input[type=file] { display:none; }
   <div class="app-header">
     <div>
       <div class="app-title">SEIKO MODS</div>
-      <div class="app-subtitle">Gestion comptable</div>
+      <div class="app-subtitle" id="appSubtitle">Gestion comptable</div>
     </div>
     <button class="sync-btn" id="syncBtn" onclick="syncDrive()" title="Synchroniser Drive">☁️</button>
   </div>
@@ -356,7 +412,10 @@ input[type=file] { display:none; }
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;margin-bottom:10px">
         <div class="section-title" style="margin:0">Transactions</div>
-        <button onclick="toggleEdit()" id="editBtn" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:0.65rem;padding:4px 10px;border-radius:20px;cursor:pointer;letter-spacing:0.5px">MODIFIER</button>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button onclick="cycleSortMode()" id="sortBtn" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:0.6rem;padding:4px 9px;border-radius:20px;cursor:pointer;letter-spacing:0.5px">⇅ DATE</button>
+          <button onclick="toggleEdit()" id="editBtn" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:0.65rem;padding:4px 10px;border-radius:20px;cursor:pointer;letter-spacing:0.5px">MODIFIER</button>
+        </div>
       </div>
       <div class="search-bar-wrap">
         <span class="search-bar-icon">🔍</span>
@@ -479,6 +538,56 @@ input[type=file] { display:none; }
       <div id="stockList"></div>
     </div>
 
+    <!-- PAGE: RAPPELS + STOCK -->
+    <div class="page" id="page-reminders">
+      <div id="notifBanner"></div>
+
+      <!-- Tabs -->
+      <div class="chart-tabs" id="reminderTabs" style="margin-bottom:14px">
+        <button class="chart-tab active" id="rtabReminders" onclick="setReminderTab('reminders',this)">🔔 Rappels</button>
+        <button class="chart-tab" id="rtabStock" onclick="setReminderTab('stock',this)">📦 Stock</button>
+      </div>
+
+      <!-- Rappels panel -->
+      <div id="remindersPanel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="section-title" style="margin:0">Mes rappels</div>
+          <button onclick="openReminderModal()" style="background:var(--gold);border:none;color:#0e0e0f;font-size:0.8rem;font-weight:700;padding:6px 14px;border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Ajouter</button>
+        </div>
+        <div id="reminderList"></div>
+      </div>
+
+      <!-- Stock panel -->
+      <div id="stockPanel" style="display:none">
+        <div class="stock-kpi-row" id="stockKpiReminder"></div>
+        <div class="stock-header-row">
+          <div class="section-title" style="margin:0">Pièces détachées</div>
+          <button class="stock-fab" onclick="openStockModal()">+</button>
+        </div>
+        <div class="stock-filter-row" id="stockFilterRowReminder">
+          <div class="filter-chip active" data-sf="Tous" onclick="setStockFilterR(this)">Tous</div>
+          <div class="filter-chip" data-sf="Cadrans" onclick="setStockFilterR(this)">🎨 Cadrans</div>
+          <div class="filter-chip" data-sf="Mouvements" onclick="setStockFilterR(this)">⚙️ Mouvements</div>
+          <div class="filter-chip" data-sf="Bracelets" onclick="setStockFilterR(this)">🪢 Bracelets</div>
+          <div class="filter-chip" data-sf="Lunettes" onclick="setStockFilterR(this)">💎 Lunettes</div>
+          <div class="filter-chip" data-sf="Couronnes" onclick="setStockFilterR(this)">🔩 Couronnes</div>
+          <div class="filter-chip" data-sf="Outils" onclick="setStockFilterR(this)">🔧 Outils</div>
+          <div class="filter-chip" data-sf="Autre" onclick="setStockFilterR(this)">📌 Autre</div>
+        </div>
+        <div id="stockListReminder"></div>
+      </div>
+    </div>
+
+    <!-- PAGE: PRIX DE REVIENT -->
+    <div class="page" id="page-revient">
+      <div class="chart-tabs" id="revientTabs">
+        <button class="chart-tab active" onclick="setRevientTab('global',this)">Vue globale</button>
+        <button class="chart-tab" onclick="setRevientTab('detail',this)">Par montre</button>
+        <button class="chart-tab" onclick="setRevientTab('saisie',this)">Saisir coûts</button>
+      </div>
+      <div id="revientContent"></div>
+    </div>
+
     <!-- PAGE: CATALOGUE -->
     <div class="page" id="page-catalogue">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -530,6 +639,8 @@ input[type=file] { display:none; }
       <div class="setup-card">
         <div style="font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Données locales</div>
         <button onclick="exportData()" style="width:100%;padding:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:0.88rem;cursor:pointer;margin-bottom:8px">⬇️  Exporter en CSV</button>
+        <button onclick="exportJSON()" style="width:100%;padding:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:0.88rem;cursor:pointer;margin-bottom:8px">💾  Backup JSON complet</button>
+        <button onclick="importJSON()" style="width:100%;padding:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:0.88rem;cursor:pointer;margin-bottom:8px">📥  Restaurer depuis JSON</button>
         <button onclick="clearData()"  style="width:100%;padding:12px;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--red);border-radius:10px;font-size:0.88rem;cursor:pointer">🗑️  Effacer toutes les données</button>
       </div>
     </div>
@@ -541,8 +652,8 @@ input[type=file] { display:none; }
   <nav class="bottom-nav">
     <button class="nav-btn active" onclick="switchPage('home',this)"><span style="font-size:1.2rem">⌚</span><span>Dashboard</span></button>
     <button class="nav-btn" onclick="switchPage('stats',this)"><span style="font-size:1.2rem">📈</span><span>Stats</span></button>
-    <button class="nav-btn" onclick="switchPage('stock',this)"><span style="font-size:1.2rem">🏷️</span><span>Stock</span></button>
-    <button class="nav-btn" onclick="switchPage('catalogue',this)"><span style="font-size:1.2rem">🏅</span><span>Catalogue</span></button>
+    <button class="nav-btn" onclick="switchPage('revient',this)"><span style="font-size:1.2rem">🏷️</span><span>Coûts</span></button>
+    <button class="nav-btn" id="navReminders" style="position:relative" onclick="switchPage('reminders',this)"><span style="font-size:1.2rem">🔔</span><span>Rappels</span></button>
     <button class="nav-btn" onclick="switchPage('settings',this)"><span style="font-size:1.2rem">⚙️</span><span>Réglages</span></button>
   </nav>
 </div>
@@ -626,6 +737,97 @@ input[type=file] { display:none; }
       <input class="form-input" id="sSupplier" type="text" placeholder="AliExpress, eBay CN…">
     </div>
     <button class="btn-submit" onclick="saveStockItem()">Enregistrer ✓</button>
+  </div>
+</div>
+
+<!-- MODAL RAPPEL -->
+<div class="modal-overlay" id="reminderModalOverlay" onclick="closeReminderModalOutside(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">NOUVEAU RAPPEL</div>
+    <div class="form-group">
+      <label class="form-label">Type</label>
+      <div class="type-picker">
+        <div class="type-chip selected" data-type="commande" onclick="selectReminderType(this)"><span class="chip-icon">📦</span><span class="chip-label">Commande</span></div>
+        <div class="type-chip" data-type="paiement" onclick="selectReminderType(this)"><span class="chip-icon">💶</span><span class="chip-label">Paiement</span></div>
+        <div class="type-chip" data-type="livraison" onclick="selectReminderType(this)"><span class="chip-icon">🚚</span><span class="chip-label">Livraison</span></div>
+        <div class="type-chip" data-type="achat" onclick="selectReminderType(this)"><span class="chip-icon">🛒</span><span class="chip-label">Achat</span></div>
+        <div class="type-chip" data-type="client" onclick="selectReminderType(this)"><span class="chip-icon">🙋</span><span class="chip-label">Client</span></div>
+        <div class="type-chip" data-type="autre" onclick="selectReminderType(this)"><span class="chip-icon">📌</span><span class="chip-label">Autre</span></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <input class="form-input" id="rDesc" type="text" placeholder="ex: Relancer client pour SKX007…">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date d'échéance</label>
+        <input class="form-input" id="rDate" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Priorité</label>
+        <select class="form-select" id="rPriority">
+          <option value="normale">Normale</option>
+          <option value="haute">Haute ⚠️</option>
+          <option value="urgente">Urgente 🔴</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note</label>
+      <input class="form-input" id="rNote" type="text" placeholder="Optionnel…">
+    </div>
+    <button class="btn-submit" onclick="addReminder()">Enregistrer ✓</button>
+  </div>
+</div>
+
+<!-- MODAL COÛT MONTRE -->
+<div class="modal-overlay" id="costModalOverlay" onclick="closeCostModalOutside(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">SAISIR LES COÛTS</div>
+    <div class="form-group">
+      <label class="form-label">Montre vendue</label>
+      <select class="form-select" id="costWatchSelect" onchange="loadWatchCosts()"></select>
+    </div>
+    <div id="costFieldsWrap">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">💰 Prix de vente</label>
+          <input class="form-input" id="costSalePrice" type="number" step="0.01" placeholder="0.00" inputmode="decimal" readonly style="opacity:0.6">
+        </div>
+        <div class="form-group">
+          <label class="form-label">⚙️ Pièces (€)</label>
+          <input class="form-input" id="costPieces" type="number" step="0.01" placeholder="0.00" inputmode="decimal" oninput="updateCostPreview()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">📦 Expédition (€)</label>
+          <input class="form-input" id="costShipping" type="number" step="0.01" placeholder="0.00" inputmode="decimal" oninput="updateCostPreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">🔧 Matériel (€)</label>
+          <input class="form-input" id="costMaterial" type="number" step="0.01" placeholder="0.00" inputmode="decimal" oninput="updateCostPreview()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">📌 Autres coûts (€)</label>
+        <input class="form-input" id="costOther" type="number" step="0.01" placeholder="0.00" inputmode="decimal" oninput="updateCostPreview()">
+      </div>
+      <div id="costPreview" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted)">REVIENT TOTAL</span>
+          <span id="costPreviewTotal" style="font-family:'DM Mono',monospace;font-size:0.82rem;color:var(--red);font-weight:600">0,00 €</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted)">MARGE NETTE</span>
+          <span id="costPreviewMargin" style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--gold)">—</span>
+        </div>
+      </div>
+    </div>
+    <button class="btn-submit" onclick="saveCostEntry()">Enregistrer ✓</button>
   </div>
 </div>
 
@@ -722,14 +924,15 @@ function saveWebhook() {
 
 // Construit le payload complet à envoyer
 function buildSyncPayload() {
-  // On exclut les photos du payload si elles sont trop lourdes (>800 KB)
   const photosData = watchPhotos || {};
   const photosJson = JSON.stringify(photosData);
-  const includePhotos = photosJson.length < 800_000; // ~800 KB max pour rester dans les limites Apps Script
+  const includePhotos = photosJson.length < 800000;
   return {
     entries,
     stock:     stockItems,
     catalogue: watchCatalogue,
+    costs:     watchCosts,
+    reminders,
     photos:    includePhotos ? photosData : null,
     photosOmitted: !includePhotos,
     updated:   new Date().toISOString(),
@@ -748,6 +951,12 @@ function applyDrivePayload(data) {
   if (Array.isArray(data.catalogue)) {
     watchCatalogue = data.catalogue; saveCatalogue(); changed = true;
   }
+  if (Array.isArray(data.reminders)) {
+    reminders = data.reminders; saveReminders(); changed = true;
+  }
+  if (data.costs && typeof data.costs === 'object') {
+    watchCosts = data.costs; saveWatchCosts(); changed = true;
+  }
   if (data.photos && typeof data.photos === 'object') {
     watchPhotos = data.photos; savePhotos(); changed = true;
   }
@@ -762,27 +971,50 @@ async function syncDrive(isTest = false) {
   const btn = document.getElementById('syncBtn');
   btn.className = 'sync-btn syncing'; btn.textContent = '↻';
 
-  try {
+  const attemptSync = async () => {
     const payload = buildSyncPayload();
-    // no-cors évite le preflight CORS — réponse opaque mais la requête passe bien
     await fetch(webhookUrl, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload)
     });
+    return payload;
+  };
+
+  try {
+    let payload;
+    try {
+      payload = await attemptSync();
+    } catch(firstErr) {
+      // Retry once after 1.5s
+      await new Promise(r => setTimeout(r, 1500));
+      payload = await attemptSync();
+    }
     localStorage.setItem('seiko_last_sync', payload.updated);
     btn.className = 'sync-btn synced'; btn.textContent = '✓';
-    const extra = payload.photosOmitted ? ' (photos non incluses : trop volumineuses)' : '';
-    toast(isTest ? '✅ Drive connecté et opérationnel !' : '✅ Tout sauvegardé sur Drive' + extra, '#4caf7d');
+    const extra = payload.photosOmitted ? ' (photos non incluses)' : '';
+    toast(isTest ? '✅ Drive connecté et opérationnel !' : '✅ Sauvegardé' + extra, '#4caf7d');
     setTimeout(() => { btn.className = 'sync-btn'; btn.textContent = '☁️'; }, 3000);
-    renderSettings();
+    updateAppSubtitle();
+    if(document.getElementById('page-settings').classList.contains('active')) renderSettings();
   } catch(e) {
     btn.className = 'sync-btn error'; btn.textContent = '!';
-    toast('❌ Erreur sync : ' + e.message, '#e05555');
-    setTimeout(() => { btn.className = 'sync-btn'; btn.textContent = '☁️'; }, 3000);
+    toast('❌ Sync échouée — vérifie ta connexion', '#e05555');
+    setTimeout(() => { btn.className = 'sync-btn'; btn.textContent = '☁️'; }, 4000);
   }
 }
+
+// Recharge depuis Drive quand l'app revient au premier plan
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden && webhookUrl) {
+    loadFromDrive();
+  }
+});
+// Idem sur focus (mobile)
+window.addEventListener('focus', () => {
+  if(webhookUrl) loadFromDrive();
+});
 
 // Charge les données depuis Drive via JSONP (contourne CORS en GET)
 function loadFromDrive() {
@@ -861,11 +1093,19 @@ function switchPage(name,btn) {
   document.getElementById('page-'+name).classList.add('active');
   btn.classList.add('active');
   document.getElementById('fab').style.display = name==='home' ? 'flex' : 'none';
-  if(name==='recap') renderRecap();
-  if(name==='settings') renderSettings();
-  if(name==='catalogue') renderCatalogue();
-  if(name==='stats') renderStats();
-  if(name==='stock') renderStock();
+  if(name==='recap')      renderRecap();
+  if(name==='settings')   renderSettings();
+  if(name==='catalogue')  renderCatalogue();
+  if(name==='stats')      renderStats();
+  if(name==='stock')      renderStock();
+  if(name==='reminders') {
+    reminderTab = 'reminders';
+    document.querySelectorAll('#reminderTabs .chart-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+    document.getElementById('remindersPanel').style.display='';
+    document.getElementById('stockPanel').style.display='none';
+    renderReminders();
+  }
+  if(name==='revient')    renderRevient();
 }
 
 function openModal() {
@@ -934,6 +1174,7 @@ function renderTxList() {
       String(e.amount).includes(q)
     );
   }
+  list = getSorted(list);
   const rc = document.getElementById('resultsCount');
   rc.textContent = (searchQuery||filterCat!=='Tous') ? `${list.length} résultat${list.length!==1?'s':''}` : '';
   const el = document.getElementById('txList');
@@ -960,9 +1201,20 @@ function deleteEntry(id) {
   scheduleSyncAfterEdit();
 }
 
+function smoothPath(pts) {
+  if(pts.length<2) return '';
+  let d=`M${pts[0][0]},${pts[0][1]}`;
+  for(let i=1;i<pts.length;i++){
+    const prev=pts[i-1],cur=pts[i];
+    const cpx=(prev[0]+cur[0])/2;
+    d+=` C${cpx},${prev[1]} ${cpx},${cur[1]} ${cur[0]},${cur[1]}`;
+  }
+  return d;
+}
+
 function buildSalesChart(filtered) {
   const svg=document.getElementById('salesChart');
-  const W=320,H=140,PL=36,PR=10,PT=10,PB=22;
+  const W=320,H=150,PL=40,PR=12,PT=12,PB=26;
   const cW=W-PL-PR, cH=H-PT-PB;
   const byDate={};
   filtered.forEach(e=>{
@@ -971,21 +1223,76 @@ function buildSalesChart(filtered) {
     else byDate[e.date].costs+=e.amount;
   });
   let dates=Object.keys(byDate).sort();
-  if(!dates.length){svg.innerHTML=`<text x="160" y="75" text-anchor="middle" font-family="DM Mono,monospace" font-size="11" fill="#888892">Aucune donnée</text>`;return;}
+  if(!dates.length){svg.innerHTML=`<text x="160" y="75" text-anchor="middle" font-family="DM Mono,monospace" font-size="11" fill="#888892">Aucune donnée sur la période</text>`;return;}
   if(dates.length===1) dates=[dates[0],dates[0]];
   const sv=dates.map(d=>byDate[d]?.sales||0);
   const cv=dates.map(d=>byDate[d]?.costs||0);
   const maxV=Math.max(...sv,...cv,1);
-  const xS=i=>PL+(i/(dates.length-1))*cW;
+  const xS=i=>PL+(i/(dates.length-1||1))*cW;
   const yS=v=>PT+cH-(v/maxV)*cH;
-  const poly=vals=>vals.map((v,i)=>`${xS(i)},${yS(v)}`).join(' ');
-  const area=vals=>{const pts=vals.map((v,i)=>`${xS(i)},${yS(v)}`).join(' ');return `${pts} ${xS(vals.length-1)},${PT+cH} ${xS(0)},${PT+cH}`;};
-  const ticks=[0,maxV*0.5,maxV];
-  const yLabels=ticks.map(v=>`<text x="${PL-4}" y="${yS(v)+4}" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#888892">${fmtShort(v)}</text>`).join('');
-  const grid=ticks.map(v=>`<line x1="${PL}" y1="${yS(v)}" x2="${W-PR}" y2="${yS(v)}" stroke="#2a2a2e" stroke-width="1"/>`).join('');
-  const xLabels=[0,dates.length-1].map(i=>{const p=dates[i].split('-');const l=`${p[2]}/${p[1]}`;return `<text x="${xS(i)}" y="${H-4}" text-anchor="${i===0?'start':'end'}" font-family="DM Mono,monospace" font-size="8" fill="#888892">${l}</text>`;}).join('');
-  const dots=sv.map((v,i)=>`<circle cx="${xS(i)}" cy="${yS(v)}" r="3" fill="#4caf7d" stroke="#0e0e0f" stroke-width="1.5"/>`).join('');
-  svg.innerHTML=`${grid}${yLabels}${xLabels}<polygon points="${area(cv)}" fill="#e05555" opacity="0.1"/><polygon points="${area(sv)}" fill="#4caf7d" opacity="0.12"/><polyline points="${poly(cv)}" fill="none" stroke="#e05555" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><polyline points="${poly(sv)}" fill="none" stroke="#4caf7d" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}`;
+  const ptsSales=dates.map((_,i)=>[xS(i),yS(sv[i])]);
+  const ptsCosts=dates.map((_,i)=>[xS(i),yS(cv[i])]);
+
+  // Y axis nice ticks
+  const niceMax = Math.ceil(maxV/50)*50;
+  const ticks=[0, niceMax*0.5, niceMax];
+  const yLabels=ticks.map(v=>`<text x="${PL-5}" y="${yS(v/niceMax*maxV)+4}" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#666672">${fmtShort(v/niceMax*maxV)}</text>`).join('');
+  const grid=ticks.map(v=>`<line x1="${PL}" y1="${yS(v/niceMax*maxV)}" x2="${W-PR}" y2="${yS(v/niceMax*maxV)}" stroke="#222226" stroke-width="1" stroke-dasharray="3,3"/>`).join('');
+
+  // X axis: pick evenly spaced labels (max 4)
+  const xLabelCount=Math.min(dates.length,4);
+  const xLabelIndices=[...new Set([0,...Array.from({length:xLabelCount-2},(_, k)=>Math.round((k+1)*(dates.length-1)/(xLabelCount-1))),dates.length-1])];
+  const xLabels=xLabelIndices.map(i=>{
+    const p=dates[i].split('-');
+    const lbl=`${p[2]}/${p[1]}`;
+    const anchor=i===0?'start':i===dates.length-1?'end':'middle';
+    return `<text x="${xS(i)}" y="${H-6}" text-anchor="${anchor}" font-family="DM Mono,monospace" font-size="7.5" fill="#666672">${lbl}</text>`;
+  }).join('');
+
+  // Smooth paths
+  const salesPathD=smoothPath(ptsSales);
+  const costsPathD=smoothPath(ptsCosts);
+
+  // Area fills
+  const salesAreaD=`${salesPathD} L${xS(dates.length-1)},${PT+cH} L${xS(0)},${PT+cH} Z`;
+  const costsAreaD=`${costsPathD} L${xS(dates.length-1)},${PT+cH} L${xS(0)},${PT+cH} Z`;
+
+  // Gradient defs
+  const defs=`<defs>
+    <linearGradient id="gSales" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4caf7d" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#4caf7d" stop-opacity="0.02"/>
+    </linearGradient>
+    <linearGradient id="gCosts" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e05555" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#e05555" stop-opacity="0.02"/>
+    </linearGradient>
+  </defs>`;
+
+  // Interactive dots with titles (tooltip on hover/tap)
+  const dotsSales=ptsSales.map((pt,i)=>`
+    <circle cx="${pt[0]}" cy="${pt[1]}" r="4" fill="#4caf7d" stroke="#0e0e0f" stroke-width="2">
+      <title>${fmtDate(dates[i])} · +${fmt(sv[i])}</title>
+    </circle>`).join('');
+  const dotsCosts=ptsCosts.filter((_,i)=>cv[i]>0).map((pt,i)=>{
+    const ri=ptsCosts.indexOf(pt);
+    return `<circle cx="${pt[0]}" cy="${pt[1]}" r="3" fill="#e05555" stroke="#0e0e0f" stroke-width="1.5">
+      <title>${fmtDate(dates[ri])} · −${fmt(cv[ri])}</title>
+    </circle>`;
+  }).join('');
+
+  // Last value labels
+  const lastSale=sv[sv.length-1];
+  const lastX=xS(dates.length-1), lastY=yS(lastSale);
+  const saleLabel=lastSale>0?`<text x="${lastX-3}" y="${lastY-8}" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#4caf7d" font-weight="500">+${fmtShort(lastSale)}</text>`:'';
+
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=`${defs}${grid}${yLabels}${xLabels}
+    <path d="${costsAreaD}" fill="url(#gCosts)"/>
+    <path d="${salesAreaD}" fill="url(#gSales)"/>
+    <path d="${costsPathD}" fill="none" stroke="#e05555" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>
+    <path d="${salesPathD}" fill="none" stroke="#4caf7d" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dotsCosts}${dotsSales}${saleLabel}`;
 }
 
 function buildDonutChart() {
@@ -1047,7 +1354,21 @@ function renderRecap() {
     if(!items.length) return '';
     const total=items.reduce((s,e)=>s+e.amount,0);
     const isV=cat==='Vente';
-    return `<div class="recap-item"><div class="recap-left"><div class="recap-icon" style="background:${m.bg}">${m.icon}</div><div><div class="recap-name">${cat}</div><div class="recap-count">${items.length} entrée${items.length>1?'s':''}</div></div></div><div class="recap-amount" style="color:${isV?'var(--green)':'var(--red)'}">${isV?'+':'−'}${fmt(total)}</div></div>`;
+    const sparkVals=getMonthlySparkData(cat,6);
+    const spark=buildSparkline(sparkVals,isV?'#4caf7d':'#e05555',56,22);
+    return `<div class="recap-item">
+      <div class="recap-left">
+        <div class="recap-icon" style="background:${m.bg}">${m.icon}</div>
+        <div>
+          <div class="recap-name">${cat}</div>
+          <div class="recap-count">${items.length} entrée${items.length>1?'s':''} · 6 mois</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="opacity:0.7">${spark}</div>
+        <div class="recap-amount" style="color:${isV?'var(--green)':'var(--red)'}">${isV?'+':'−'}${fmt(total)}</div>
+      </div>
+    </div>`;
   }).join('')||'<div style="padding:20px;text-align:center;color:var(--muted);font-size:0.85rem">Aucune donnée</div>';
   buildDonutChart();
   const depCats=['Pièces','Expédition','Matériel','Autre'];
@@ -1138,7 +1459,62 @@ function renderSettings() {
   if (saved) document.getElementById('webhookInput').value = saved;
 }
 
-function exportData() {
+// ─── TRI TRANSACTIONS ────────────────────────────────────────────────────────
+let sortMode = 'date_desc'; // date_desc | date_asc | amount_desc | amount_asc
+const SORT_LABELS = { date_desc:'⇅ DATE ↓', date_asc:'⇅ DATE ↑', amount_desc:'⇅ MONTANT ↓', amount_asc:'⇅ MONTANT ↑' };
+const SORT_CYCLE  = ['date_desc','date_asc','amount_desc','amount_asc'];
+
+function cycleSortMode() {
+  const idx = SORT_CYCLE.indexOf(sortMode);
+  sortMode = SORT_CYCLE[(idx+1) % SORT_CYCLE.length];
+  document.getElementById('sortBtn').textContent = SORT_LABELS[sortMode];
+  renderTxList();
+}
+
+function getSorted(list) {
+  return [...list].sort((a,b) => {
+    if(sortMode==='date_desc')   return b.date.localeCompare(a.date);
+    if(sortMode==='date_asc')    return a.date.localeCompare(b.date);
+    if(sortMode==='amount_desc') return b.amount - a.amount;
+    if(sortMode==='amount_asc')  return a.amount - b.amount;
+    return 0;
+  });
+}
+
+function exportJSON() {
+  const data = JSON.stringify({
+    entries, stock: stockItems, catalogue: watchCatalogue,
+    costs: watchCosts, reminders,
+    exported: new Date().toISOString()
+  }, null, 2);
+  const a = document.createElement('a');
+  a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(data);
+  a.download = `seiko_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  toast('💾 Backup JSON téléchargé', '#5b9cf6');
+}
+
+function importJSON() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if(!confirm(`Importer ${data.entries?.length||0} transactions, ${data.stock?.length||0} pièces ? Les données actuelles seront remplacées.`)) return;
+        applyDrivePayload(data);
+        render(); updateReminderBadge();
+        toast('✅ Import réussi', '#4caf7d');
+        scheduleSyncAfterEdit();
+      } catch(err) { toast('❌ Fichier JSON invalide', '#e05555'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+function exportCSV() {
   if(!entries.length){toast('Aucune donnée à exporter');return;}
   const csv='Date,Catégorie,Description,Montant,Note\n'+entries.map(e=>`${e.date},"${e.cat}","${e.desc}",${e.cat==='Vente'?'':'-'}${e.amount},"${e.note||''}"`).join('\n');
   const a=document.createElement('a');
@@ -1495,7 +1871,7 @@ function renderStats() {
 
 function buildAdvChart(f) {
   const svg=document.getElementById('advChart');
-  const W=320,H=150,PL=38,PR=8,PT=10,PB=24;
+  const W=320,H=155,PL=40,PR=10,PT=12,PB=26;
   const cW=W-PL-PR, cH=H-PT-PB;
   const byMonth=groupByMonth(f);
   const months=Object.keys(byMonth).sort();
@@ -1503,29 +1879,61 @@ function buildAdvChart(f) {
   const revVals=months.map(m=>byMonth[m].rev);
   const costVals=months.map(m=>byMonth[m].costs);
   const maxV=Math.max(...revVals,...costVals,1);
+  const niceMax=Math.ceil(maxV/50)*50||50;
   const xS=i=>PL+(i+0.5)*(cW/months.length);
-  const yS=v=>PT+cH-(v/maxV)*cH;
-  const bW=Math.max(4,cW/months.length*0.35);
-  const ticks=[0,maxV*0.5,maxV];
-  const grid=ticks.map(v=>`<line x1="${PL}" y1="${yS(v)}" x2="${W-PR}" y2="${yS(v)}" stroke="#2a2a2e" stroke-width="1"/>`).join('');
-  const yLbl=ticks.map(v=>`<text x="${PL-4}" y="${yS(v)+4}" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#888892">${fmtShort(v)}</text>`).join('');
-  const xLbl=months.map((m,i)=>{const p=m.split('-');return `<text x="${xS(i)}" y="${H-4}" text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="#888892">${p[1]}/${p[0].slice(2)}</text>`;}).join('');
+  const yS=v=>PT+cH-(v/niceMax)*cH;
+  const bW=Math.max(5,Math.min(16,cW/months.length*0.35));
+  const ticks=[0,niceMax*0.5,niceMax];
+  const grid=ticks.map(v=>`<line x1="${PL}" y1="${yS(v)}" x2="${W-PR}" y2="${yS(v)}" stroke="#222226" stroke-width="1" stroke-dasharray="3,3"/>`).join('');
+  const yLbl=ticks.map(v=>`<text x="${PL-5}" y="${yS(v)+4}" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#666672">${fmtShort(v)}</text>`).join('');
 
-  let bars='',lines='';
+  // X labels: show all months if ≤6, else every other
+  const xLbl=months.map((m,i)=>{
+    if(months.length>6 && i%2!==0) return '';
+    const p=m.split('-');
+    const mNames=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+    const lbl=mNames[parseInt(p[1])-1]||p[1];
+    return `<text x="${xS(i)}" y="${H-6}" text-anchor="middle" font-family="DM Mono,monospace" font-size="7.5" fill="#666672">${lbl}</text>`;
+  }).join('');
+
+  const defs=`<defs>
+    <linearGradient id="ga1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4caf7d" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#4caf7d" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ga2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e05555" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#e05555" stop-opacity="0"/>
+    </linearGradient>
+  </defs>`;
+
+  let content='';
   if(advChartMode==='bar') {
-    bars=months.map((m,i)=>{
+    content=months.map((m,i)=>{
       const rv=revVals[i],cv=costVals[i];
-      const gap=2;
-      return `<rect x="${xS(i)-bW-gap/2}" y="${yS(rv)}" width="${bW}" height="${cH-(yS(rv)-PT)}" fill="#4caf7d" opacity="0.85" rx="2"/>
-              <rect x="${xS(i)+gap/2}" y="${yS(cv)}" width="${bW}" height="${cH-(yS(cv)-PT)}" fill="#e05555" opacity="0.75" rx="2"/>`;
+      const gap=3;
+      const rvH=Math.max(2,(rv/niceMax)*cH), cvH=Math.max(2,(cv/niceMax)*cH);
+      const rvY=PT+cH-rvH, cvY=PT+cH-cvH;
+      return `<rect x="${xS(i)-bW-gap/2}" y="${rvY}" width="${bW}" height="${rvH}" fill="#4caf7d" rx="3">
+        <title>${m}: +${fmt(rv)}</title></rect>
+        <rect x="${xS(i)+gap/2}" y="${cvY}" width="${bW}" height="${cvH}" fill="#e05555" rx="3" opacity="0.8">
+        <title>${m}: −${fmt(cv)}</title></rect>`;
     }).join('');
   } else {
-    const poly=(vals,color)=>vals.length<2?'':`<polyline points="${vals.map((v,i)=>`${xS(i)},${yS(v)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
-    const area=(vals,color)=>{const pts=vals.map((v,i)=>`${xS(i)},${yS(v)}`).join(' ');return `<polygon points="${pts} ${xS(vals.length-1)},${PT+cH} ${xS(0)},${PT+cH}" fill="${color}" opacity="0.1"/>`;};
-    const dots=(vals,color)=>vals.map((v,i)=>`<circle cx="${xS(i)}" cy="${yS(v)}" r="3" fill="${color}" stroke="#0e0e0f" stroke-width="1.5"/>`).join('');
-    lines=area(revVals,'#4caf7d')+area(costVals,'#e05555')+poly(revVals,'#4caf7d')+poly(costVals,'#e05555')+dots(revVals,'#4caf7d')+dots(costVals,'#e05555');
+    const pts1=months.map((_,i)=>[xS(i),yS(revVals[i])]);
+    const pts2=months.map((_,i)=>[xS(i),yS(costVals[i])]);
+    const p1=smoothPath(pts1), p2=smoothPath(pts2);
+    const a1=`${p1} L${xS(months.length-1)},${PT+cH} L${xS(0)},${PT+cH} Z`;
+    const a2=`${p2} L${xS(months.length-1)},${PT+cH} L${xS(0)},${PT+cH} Z`;
+    const dots1=pts1.map((pt,i)=>`<circle cx="${pt[0]}" cy="${pt[1]}" r="3.5" fill="#4caf7d" stroke="#0e0e0f" stroke-width="1.5"><title>${months[i]}: +${fmt(revVals[i])}</title></circle>`).join('');
+    const dots2=pts2.filter((_,i)=>costVals[i]>0).map((pt,i)=>`<circle cx="${pt[0]}" cy="${pt[1]}" r="3" fill="#e05555" stroke="#0e0e0f" stroke-width="1.5"/>`).join('');
+    content=`<path d="${a2}" fill="url(#ga2)"/><path d="${a1}" fill="url(#ga1)"/>
+      <path d="${p2}" fill="none" stroke="#e05555" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>
+      <path d="${p1}" fill="none" stroke="#4caf7d" stroke-width="2.2" stroke-linecap="round"/>
+      ${dots2}${dots1}`;
   }
-  svg.innerHTML=grid+yLbl+xLbl+bars+lines;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=`${defs}${grid}${yLbl}${xLbl}${content}`;
 }
 
 function buildHeatmap() {
@@ -1721,7 +2129,467 @@ function renderStock() {
 
 
 
-// Demo stock data
+// ══════════════════════════════════════════════════════════════════
+// 🔔 RAPPELS
+// ══════════════════════════════════════════════════════════════════
+let reminders = JSON.parse(localStorage.getItem('seiko_reminders') || '[]');
+let selectedReminderType = 'commande';
+
+function saveReminders() { localStorage.setItem('seiko_reminders', JSON.stringify(reminders)); }
+
+const REMINDER_TYPES = {
+  commande:  { icon:'📦', color:'#e8925a', bg:'rgba(232,146,90,0.15)' },
+  paiement:  { icon:'💶', color:'#4caf7d', bg:'rgba(76,175,125,0.15)' },
+  livraison: { icon:'🚚', color:'#5b9cf6', bg:'rgba(91,156,246,0.15)' },
+  achat:     { icon:'🛒', color:'#9b7fe8', bg:'rgba(155,127,232,0.15)' },
+  client:    { icon:'🙋', color:'#c8a96e', bg:'rgba(200,169,110,0.15)' },
+  autre:     { icon:'📌', color:'#888892', bg:'rgba(136,136,146,0.15)' },
+};
+
+function openReminderModal() {
+  document.getElementById('rDesc').value = '';
+  document.getElementById('rNote').value = '';
+  document.getElementById('rDate').value = '';
+  document.getElementById('rPriority').value = 'normale';
+  document.querySelectorAll('.type-chip').forEach(c => c.classList.remove('selected'));
+  document.querySelector('.type-chip[data-type="commande"]').classList.add('selected');
+  selectedReminderType = 'commande';
+  document.getElementById('reminderModalOverlay').classList.add('open');
+}
+function closeReminderModal() { document.getElementById('reminderModalOverlay').classList.remove('open'); }
+function closeReminderModalOutside(e) { if(e.target===document.getElementById('reminderModalOverlay')) closeReminderModal(); }
+function selectReminderType(el) {
+  document.querySelectorAll('.type-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedReminderType = el.dataset.type;
+}
+
+function addReminder() {
+  const desc = document.getElementById('rDesc').value.trim();
+  const date = document.getElementById('rDate').value;
+  const note = document.getElementById('rNote').value.trim();
+  const priority = document.getElementById('rPriority').value;
+  if(!desc) { toast('⚠️ Description requise','#e05555'); return; }
+  reminders.unshift({ id:Date.now(), type:selectedReminderType, desc, date, note, priority, done:false });
+  saveReminders();
+  closeReminderModal();
+  renderReminders();
+  updateReminderBadge();
+  toast('✓ Rappel ajouté','#4caf7d');
+  scheduleSyncAfterEdit();
+  // Notification navigateur si autorisée
+  scheduleNotification(desc, date);
+}
+
+function deleteReminder(id) {
+  reminders = reminders.filter(r => r.id !== id);
+  saveReminders(); renderReminders(); updateReminderBadge();
+  toast('🗑 Rappel supprimé');
+}
+
+function doneReminder(id) {
+  const r = reminders.find(r => r.id === id);
+  if(r) { r.done = true; saveReminders(); renderReminders(); updateReminderBadge(); toast('✅ Rappel accompli','#4caf7d'); }
+}
+
+function updateReminderBadge() {
+  const urgent = reminders.filter(r => !r.done && r.date && r.date <= new Date().toISOString().split('T')[0]).length;
+  const nav = document.getElementById('navReminders');
+  let badge = nav.querySelector('.reminder-count-badge');
+  if(urgent > 0) {
+    if(!badge) { badge = document.createElement('div'); badge.className='reminder-count-badge'; nav.appendChild(badge); }
+    badge.textContent = urgent > 9 ? '9+' : urgent;
+  } else {
+    if(badge) badge.remove();
+  }
+}
+
+
+// ── RAPPELS PAGE TABS ────────────────────────────────────────────────────────
+let reminderTab = 'reminders';
+let stockFilterR = 'Tous';
+
+function setReminderTab(tab, el) {
+  reminderTab = tab;
+  document.querySelectorAll('#reminderTabs .chart-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  if(tab === 'reminders') {
+    document.getElementById('remindersPanel').style.display = '';
+    document.getElementById('stockPanel').style.display = 'none';
+    renderReminders();
+  } else {
+    document.getElementById('remindersPanel').style.display = 'none';
+    document.getElementById('stockPanel').style.display = '';
+    renderStockPanel();
+  }
+}
+
+function setStockFilterR(el) {
+  document.querySelectorAll('#stockFilterRowReminder .filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  stockFilterR = el.dataset.sf;
+  renderStockPanel();
+}
+
+function renderStockPanel() {
+  const total = stockItems.reduce((s,i) => s+i.qty, 0);
+  const lowCount = stockItems.filter(i => i.qty>0 && i.qty<=i.alertQty).length;
+  const outCount = stockItems.filter(i => i.qty===0).length;
+  document.getElementById('stockKpiReminder').innerHTML = `
+    <div class="stock-kpi"><div class="stock-kpi-val">${stockItems.length}</div><div class="stock-kpi-lbl">Références</div></div>
+    <div class="stock-kpi"><div class="stock-kpi-val" style="color:${lowCount?'var(--orange)':'var(--green)'}">${lowCount}</div><div class="stock-kpi-lbl">Stock bas</div></div>
+    <div class="stock-kpi"><div class="stock-kpi-val" style="color:${outCount?'var(--red)':'var(--muted)'}">${outCount}</div><div class="stock-kpi-lbl">Ruptures</div></div>`;
+
+  let list = stockItems;
+  if(stockFilterR !== 'Tous') list = list.filter(s => s.cat === stockFilterR);
+
+  const el = document.getElementById('stockListReminder');
+  if(!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🏷️</div><p>Aucune pièce${stockFilterR!=='Tous'?' dans cette catégorie':''}.<br>Appuyez sur <strong>+</strong> pour ajouter.</p></div>`;
+    return;
+  }
+  el.innerHTML = list.map(s => {
+    const icon = STOCK_CAT_ICONS[s.cat] || '📌';
+    const isLow = s.qty>0 && s.qty<=s.alertQty;
+    const isOut = s.qty===0;
+    const badge = isOut
+      ? '<span class="stock-badge out">🔴 Rupture</span>'
+      : isLow ? '<span class="stock-badge low">⚠ Stock bas</span>'
+      : '<span class="stock-badge ok">✓ En stock</span>';
+    return `<div class="stock-card">
+      <div class="stock-icon-wrap">${icon}</div>
+      <div class="stock-info">
+        <div class="stock-name">${s.name}</div>
+        <div class="stock-ref">${s.ref?s.ref+' · ':''}${s.cat}${s.supplier?' · '+s.supplier:''}</div>
+        ${badge}
+        ${s.price?`<div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);margin-top:3px">${fmt(s.price)} / unité</div>`:''}
+      </div>
+      <div class="stock-qty-wrap">
+        <button class="qty-btn" onclick="changeQty(${s.id},-1);renderStockPanel()">−</button>
+        <div class="qty-val ${isOut||isLow?'low':''}">${s.qty}</div>
+        <button class="qty-btn" onclick="changeQty(${s.id},+1);renderStockPanel()">+</button>
+      </div>
+      <button class="stock-del" onclick="deleteStockItem(${s.id});renderStockPanel()" title="Supprimer">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderReminders() {
+  const today = new Date().toISOString().split('T')[0];
+  const tomorrow = new Date(Date.now()+86400000).toISOString().split('T')[0];
+  const soon = new Date(Date.now()+3*86400000).toISOString().split('T')[0];
+
+  const active = reminders.filter(r => !r.done);
+  const done   = reminders.filter(r => r.done);
+
+  // Banner
+  const overdue = active.filter(r => r.date && r.date < today).length;
+  const todayR  = active.filter(r => r.date === today).length;
+  const nb = document.getElementById('notifBanner');
+  if(overdue > 0) {
+    nb.innerHTML = `<div class="notif-banner" onclick="requestNotifPermission()">🔴 ${overdue} rappel${overdue>1?'s':''} en retard — Appuie pour activer les notifications</div>`;
+  } else if(todayR > 0) {
+    nb.innerHTML = `<div class="notif-banner">🟡 ${todayR} rappel${todayR>1?'s':''} pour aujourd'hui</div>`;
+  } else { nb.innerHTML = ''; }
+
+  const el = document.getElementById('reminderList');
+  if(!active.length && !done.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🔔</div><p>Aucun rappel.<br>Appuie sur <strong>+ Ajouter</strong> pour créer ton premier rappel.</p></div>';
+    return;
+  }
+
+  const renderCard = r => {
+    const m = REMINDER_TYPES[r.type] || REMINDER_TYPES['autre'];
+    const prioColor = r.priority==='urgente' ? 'var(--red)' : r.priority==='haute' ? 'var(--orange)' : 'var(--border)';
+    let dueClass = '', dueText = '';
+    if(r.date) {
+      if(r.date < today)       { dueClass='overdue'; dueText='🔴 En retard — '+fmtDate(r.date); }
+      else if(r.date===today)  { dueClass='today';   dueText='🟡 Aujourd\'hui'; }
+      else if(r.date<=soon)    { dueClass='soon';    dueText='🟠 Bientôt — '+fmtDate(r.date); }
+      else                     { dueText='📅 '+fmtDate(r.date); }
+    }
+    return `<div class="reminder-card" style="border-left:3px solid ${prioColor}">
+      <div class="reminder-icon" style="background:${m.bg}">${m.icon}</div>
+      <div class="reminder-info">
+        <div class="reminder-title">${r.desc}</div>
+        ${r.date ? `<div class="reminder-due ${dueClass}">${dueText}</div>` : ''}
+        ${r.note ? `<div style="font-size:0.75rem;color:var(--muted)">${r.note}</div>` : ''}
+        ${!r.done ? `<div class="reminder-actions">
+          <button class="reminder-done-btn" onclick="doneReminder(${r.id})">✓ Fait</button>
+          <button class="reminder-del-btn" onclick="deleteReminder(${r.id})">Supprimer</button>
+        </div>` : ''}
+      </div>
+    </div>`;
+  };
+
+  let html = active.sort((a,b) => (a.date||'9')>(b.date||'9') ? 1 : -1).map(renderCard).join('');
+  if(done.length) {
+    html += `<div class="section-title">Accomplis (${done.length})</div>`;
+    html += done.slice(0,5).map(r => `<div style="opacity:0.4">${renderCard(r)}</div>`).join('');
+  }
+  el.innerHTML = html;
+}
+
+function requestNotifPermission() {
+  if('Notification' in window) Notification.requestPermission().then(p => {
+    if(p==='granted') toast('🔔 Notifications activées !','#4caf7d');
+  });
+}
+
+function scheduleNotification(desc, date) {
+  if(!date || Notification.permission !== 'granted') return;
+  const target = new Date(date+'T09:00:00');
+  const delay = target - Date.now();
+  if(delay > 0 && delay < 7*24*3600000) {
+    setTimeout(() => new Notification('⌚ Seiko Mods', { body: desc, icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⌚</text></svg>' }), delay);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 🏷️ PRIX DE REVIENT
+// ══════════════════════════════════════════════════════════════════
+let watchCosts = JSON.parse(localStorage.getItem('seiko_costs') || '{}');
+let currentCostWatchId = null;
+let revientTab = 'global';
+
+function saveWatchCosts() { localStorage.setItem('seiko_costs', JSON.stringify(watchCosts)); }
+
+function setRevientTab(tab, el) {
+  revientTab = tab;
+  document.querySelectorAll('#revientTabs .chart-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderRevient();
+}
+
+function renderRevient() {
+  const c = document.getElementById('revientContent');
+  syncCatalogueFromSales();
+
+  if(revientTab === 'global') {
+    renderRevientGlobal(c);
+  } else if(revientTab === 'detail') {
+    renderRevientDetail(c);
+  } else {
+    renderRevientSaisie(c);
+  }
+}
+
+function calcWatchMargin(w) {
+  const cost = watchCosts[w.id] || {};
+  const totalCost = (cost.pieces||0) + (cost.shipping||0) + (cost.material||0) + (cost.other||0);
+  const margin = w.price - totalCost;
+  const pct = w.price > 0 ? (margin/w.price*100) : 0;
+  return { totalCost, margin, pct, hasCost: totalCost > 0 };
+}
+
+function renderRevientGlobal(c) {
+  const withCosts = watchCatalogue.filter(w => watchCosts[w.id] && calcWatchMargin(w).hasCost);
+  if(!watchCatalogue.length) {
+    c.innerHTML = '<div class="empty"><div class="empty-icon">🏷️</div><p>Aucune vente enregistrée.<br>Ajoute des ventes pour analyser tes marges.</p></div>';
+    return;
+  }
+  if(!withCosts.length) {
+    c.innerHTML = `<div class="empty"><div class="empty-icon">🏷️</div><p>Aucun coût saisi.<br>Va dans l'onglet <strong>Saisir coûts</strong> pour démarrer.</p></div>`;
+    return;
+  }
+  const totVente  = withCosts.reduce((s,w) => s+w.price, 0);
+  const totCost   = withCosts.reduce((s,w) => s+calcWatchMargin(w).totalCost, 0);
+  const totMargin = totVente - totCost;
+  const avgPct    = totVente > 0 ? (totMargin/totVente*100) : 0;
+  const marginColor = avgPct >= 40 ? 'var(--green)' : avgPct >= 20 ? 'var(--gold)' : 'var(--red)';
+
+  // Donut marge
+  const r=36, cx=50, cy=50, circumf=2*Math.PI*r;
+  const pct = Math.max(0,Math.min(100,avgPct));
+  const dash = (pct/100)*circumf;
+  const donutSvg = `<svg viewBox="0 0 100 100" width="80" height="80">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="12"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${marginColor}" stroke-width="12"
+      stroke-dasharray="${dash} ${circumf}" stroke-dashoffset="${circumf/4}" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+    <text x="${cx}" y="${cy-4}" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="14" fill="${marginColor}">${pct.toFixed(0)}%</text>
+    <text x="${cx}" y="${cy+9}" text-anchor="middle" font-family="DM Mono,monospace" font-size="6" fill="#888892">MARGE</text>
+  </svg>`;
+
+  c.innerHTML = `
+    <div class="revient-global">
+      ${donutSvg}
+      <div class="revient-big">
+        <div class="revient-big-val" style="color:${marginColor}">${fmt(totMargin)}</div>
+        <div class="revient-big-lbl">Bénéfice net total</div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <span class="cost-badge neutral">${fmt(totVente)} ventes</span>
+          <span class="cost-badge loss">${fmt(totCost)} coûts</span>
+        </div>
+      </div>
+    </div>
+    <div class="section-title">Top marges</div>
+    <div class="revient-section">
+      ${[...withCosts].sort((a,b)=>calcWatchMargin(b).pct-calcWatchMargin(a).pct).slice(0,8).map(w=>{
+        const {margin, pct, totalCost} = calcWatchMargin(w);
+        const cls = pct>=40 ? 'profit' : pct>=20 ? 'neutral' : 'loss';
+        const col = pct>=40 ? 'var(--green)' : pct>=20 ? 'var(--gold)' : 'var(--red)';
+        return `<div class="cost-row">
+          <div>
+            <div class="cost-label">${w.name}</div>
+            <div class="cost-sub">${fmtDate(w.date)} · Revient: ${fmt(totalCost)}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="cost-val" style="color:${col}">${fmt(margin)}</div>
+            <span class="cost-badge ${cls}">${pct.toFixed(0)}%</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderRevientDetail(c) {
+  syncCatalogueFromSales();
+  if(!watchCatalogue.length) {
+    c.innerHTML = '<div class="empty"><div class="empty-icon">🏷️</div><p>Aucune vente enregistrée.</p></div>';
+    return;
+  }
+  c.innerHTML = watchCatalogue.map(w => {
+    const {totalCost, margin, pct, hasCost} = calcWatchMargin(w);
+    const cost = watchCosts[w.id] || {};
+    const col = !hasCost ? 'var(--muted)' : pct>=40 ? 'var(--green)' : pct>=20 ? 'var(--gold)' : 'var(--red)';
+    return `<div class="revient-section">
+      <div class="revient-header">
+        <div>
+          <div class="revient-title">${w.name}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--muted);margin-top:2px">${fmtDate(w.date)}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="revient-total" style="color:${col}">${hasCost ? fmt(margin) : '—'}</div>
+          ${hasCost ? `<div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:${col}">${pct.toFixed(0)}% marge</div>` : ''}
+        </div>
+      </div>
+      <div class="cost-row"><div class="cost-label">Prix de vente</div><div class="cost-val" style="color:var(--green)">${fmt(w.price)}</div></div>
+      ${hasCost ? `
+      <div class="cost-row"><div><div class="cost-label">Pièces</div></div><div class="cost-val" style="color:var(--red)">−${fmt(cost.pieces||0)}</div></div>
+      <div class="cost-row"><div><div class="cost-label">Expédition</div></div><div class="cost-val" style="color:var(--red)">−${fmt(cost.shipping||0)}</div></div>
+      <div class="cost-row"><div><div class="cost-label">Matériel</div></div><div class="cost-val" style="color:var(--red)">−${fmt(cost.material||0)}</div></div>
+      <div class="cost-row"><div><div class="cost-label">Autres coûts</div></div><div class="cost-val" style="color:var(--red)">−${fmt(cost.other||0)}</div></div>
+      <div class="cost-row" style="background:var(--surface2)"><div><div class="cost-label" style="font-weight:700">Bénéfice net</div></div><div class="cost-val" style="color:${col};font-size:1rem">${fmt(margin)}</div></div>
+      ` : `<div class="cost-row"><div class="cost-label" style="color:var(--muted)">Coûts non saisis</div><button onclick="openCostModal(${w.id})" style="background:rgba(200,169,110,0.12);border:1px solid var(--gold);color:var(--gold);border-radius:8px;padding:5px 12px;font-size:0.75rem;cursor:pointer;font-family:'DM Mono',monospace;">Saisir</button></div>`}
+    </div>`;
+  }).join('');
+}
+
+function renderRevientSaisie(c) {
+  syncCatalogueFromSales();
+  if(!watchCatalogue.length) {
+    c.innerHTML = '<div class="empty"><div class="empty-icon">🏷️</div><p>Aucune vente enregistrée.</p></div>';
+    return;
+  }
+  c.innerHTML = `<div style="margin-bottom:12px;font-size:0.82rem;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.68rem">
+    Sélectionne une montre pour saisir ou modifier ses coûts de production.</div>` +
+    watchCatalogue.map(w => {
+      const {hasCost, pct, margin} = calcWatchMargin(w);
+      return `<div class="cost-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;" onclick="openCostModal(${w.id})">
+        <div>
+          <div class="cost-label">${w.name}</div>
+          <div class="cost-sub">${fmtDate(w.date)} · ${fmt(w.price)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${hasCost ? `<span class="cost-badge ${pct>=40?'profit':pct>=20?'neutral':'loss'}">${pct.toFixed(0)}%</span>` : `<span class="cost-badge neutral">Saisir</span>`}
+          <span style="color:var(--muted);font-size:1rem">›</span>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+function openCostModal(watchId) {
+  syncCatalogueFromSales();
+  currentCostWatchId = watchId;
+  const sel = document.getElementById('costWatchSelect');
+  sel.innerHTML = watchCatalogue.map(w => `<option value="${w.id}" ${w.id===watchId?'selected':''}>${w.name} — ${fmtDate(w.date)}</option>`).join('');
+  loadWatchCosts();
+  document.getElementById('costModalOverlay').classList.add('open');
+}
+
+function closeCostModal() { document.getElementById('costModalOverlay').classList.remove('open'); }
+function closeCostModalOutside(e) { if(e.target===document.getElementById('costModalOverlay')) closeCostModal(); }
+
+function loadWatchCosts() {
+  const id = parseInt(document.getElementById('costWatchSelect').value);
+  currentCostWatchId = id;
+  const w = watchCatalogue.find(w => w.id === id);
+  const cost = watchCosts[id] || {};
+  document.getElementById('costSalePrice').value = w ? w.price : '';
+  document.getElementById('costPieces').value    = cost.pieces   || '';
+  document.getElementById('costShipping').value  = cost.shipping || '';
+  document.getElementById('costMaterial').value  = cost.material || '';
+  document.getElementById('costOther').value     = cost.other    || '';
+  updateCostPreview();
+}
+
+function updateCostPreview() {
+  const salePrice = parseFloat(document.getElementById('costSalePrice').value) || 0;
+  const total = ['costPieces','costShipping','costMaterial','costOther']
+    .reduce((s,id) => s + (parseFloat(document.getElementById(id).value)||0), 0);
+  const margin = salePrice - total;
+  const pct    = salePrice > 0 ? (margin/salePrice*100) : 0;
+  const col    = pct>=40 ? 'var(--green)' : pct>=20 ? 'var(--gold)' : 'var(--red)';
+  document.getElementById('costPreviewTotal').textContent  = fmt(total);
+  document.getElementById('costPreviewMargin').textContent = salePrice > 0 ? pct.toFixed(1)+'%' : '—';
+  document.getElementById('costPreviewMargin').style.color = col;
+}
+
+function saveCostEntry() {
+  const id = currentCostWatchId;
+  if(!id) return;
+  watchCosts[id] = {
+    pieces:   parseFloat(document.getElementById('costPieces').value)   || 0,
+    shipping: parseFloat(document.getElementById('costShipping').value) || 0,
+    material: parseFloat(document.getElementById('costMaterial').value) || 0,
+    other:    parseFloat(document.getElementById('costOther').value)    || 0,
+  };
+  saveWatchCosts();
+  closeCostModal();
+  renderRevient();
+  toast('✓ Coûts enregistrés','#4caf7d');
+  scheduleSyncAfterEdit();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 📈 GRAPHIQUES ENRICHIS — stats page enrichie
+// ══════════════════════════════════════════════════════════════════
+// (Les fonctions buildAdvChart, buildHeatmap, buildForecast, buildPlatforms 
+//  restent inchangées — on ajoute juste des graphiques bonus dans renderRevientGlobal
+//  et on enrichit le dashboard avec sparklines de marge)
+
+// Sparkline SVG inline (mini graphe tendance)
+function buildSparkline(vals, color='#4caf7d', w=60, h=24) {
+  if(!vals.length) return `<svg width="${w}" height="${h}"></svg>`;
+  const max = Math.max(...vals, 1), min = Math.min(...vals, 0);
+  const range = max - min || 1;
+  const pts = vals.map((v,i) => {
+    const x = (i/(vals.length-1||1))*w;
+    const y = h - ((v-min)/range)*(h-4) - 2;
+    return `${x},${y}`;
+  }).join(' ');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${(vals.length-1)/(vals.length-1||1)*w}" cy="${h-((vals[vals.length-1]-min)/range)*(h-4)-2}" r="2.5" fill="${color}"/>
+  </svg>`;
+}
+
+// Données sparklines pour le recap
+function getMonthlySparkData(cat, n=6) {
+  const res = [];
+  for(let i=n-1;i>=0;i--) {
+    const d = new Date(); d.setMonth(d.getMonth()-i);
+    const ym = d.toISOString().slice(0,7);
+    const val = entries.filter(e=>e.date.startsWith(ym)&&(cat?e.cat===cat:e.cat==='Vente'))
+      .reduce((s,e)=>s+e.amount,0);
+    res.push(val);
+  }
+  return res;
+}
+
+// ══════════════════════════════════════════════════════════════════
+
+// Demo data
 if(!stockItems.length) {
   stockItems=[
     {id:101,cat:'Cadrans',name:'Cadran Waffle NH35',ref:'WF-BLU-01',qty:3,alertQty:2,price:8.50,supplier:'AliExpress'},
@@ -1733,6 +2601,39 @@ if(!stockItems.length) {
   ];
   saveStock();
 }
+
+// Inject CSV data from 2026-05-25 import (always add if not already present)
+(function() {
+  const csvIds = [2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020];
+  const existing = entries.map(e => e.id);
+  const toAdd = [
+    {id:2000,date:'2026-05-22',cat:'Autre',desc:'Ebook seiko mod',amount:49.99,note:''},
+    {id:2001,date:'2026-05-24',cat:'Expédition',desc:'Commande 2 bracelets, 1 cadran, 1 NH35 aiguilles…',amount:18.31,note:'Sugargoo'},
+    {id:2002,date:'2026-05-24',cat:'Pièces',desc:'Autocollant Seiko pour masse oscillante x10',amount:6.55,note:'Sugargoo'},
+    {id:2003,date:'2026-05-24',cat:'Pièces',desc:'Cadran Seiko vert olive',amount:3.9,note:'Sugargoo'},
+    {id:2004,date:'2026-05-24',cat:'Pièces',desc:'Aiguilles datejust',amount:1.29,note:'Sugargoo'},
+    {id:2005,date:'2026-05-24',cat:'Pièces',desc:'NH35A mouvement',amount:45.27,note:'Sugargoo'},
+    {id:2006,date:'2026-05-24',cat:'Pièces',desc:'Bracelet nh35 Oyster perpetual 3 mailles',amount:20.21,note:'Sugargoo'},
+    {id:2007,date:'2026-05-24',cat:'Pièces',desc:'Bracelet nh35 Oyster perpetual 5 mailles',amount:20.86,note:'Sugargoo'},
+    {id:2008,date:'2026-05-24',cat:'Matériel',desc:'Tapis pour le montage',amount:8.03,note:'AliExpress'},
+    {id:2009,date:'2026-05-24',cat:'Matériel',desc:'Tourne vis pour régler les bracelets',amount:2.63,note:'AliExpress'},
+    {id:2010,date:'2026-05-24',cat:'Matériel',desc:'Pochettes de rangement pour montres',amount:5.39,note:'Aliexpress'},
+    {id:2011,date:'2026-05-24',cat:'Matériel',desc:'Boule de serrage',amount:2.46,note:'AliExpress'},
+    {id:2012,date:'2026-05-24',cat:'Matériel',desc:'Colle loctite',amount:1.21,note:'AliExpress'},
+    {id:2013,date:'2026-05-24',cat:'Matériel',desc:'Kit d\'horloger',amount:12.49,note:'AliExpress'},
+    {id:2014,date:'2026-05-24',cat:'Matériel',desc:'Outils multiples',amount:7.65,note:'AliExpress'},
+    {id:2015,date:'2026-05-24',cat:'Matériel',desc:'Pincettes',amount:2.54,note:'AliExpress'},
+    {id:2016,date:'2026-05-24',cat:'Matériel',desc:'Support de mouvement',amount:7.19,note:'AliExpress'},
+    {id:2017,date:'2026-05-24',cat:'Matériel',desc:'Présentoir de montre',amount:0.91,note:'AliExpress'},
+    {id:2018,date:'2026-05-24',cat:'Matériel',desc:'Gants de protection pour l\'assemblage',amount:1.61,note:'AliExpress'},
+    {id:2019,date:'2026-05-24',cat:'Matériel',desc:'Pied à coulisse',amount:3.19,note:'AliExpress'},
+    {id:2020,date:'2026-05-24',cat:'Matériel',desc:'Boîte de montre noire',amount:1.86,note:'AliExpress'}
+  ].filter(e => !existing.includes(e.id));
+  if(toAdd.length) {
+    entries = toAdd.concat(entries);
+    save();
+  }
+})();
 
 if(!entries.length) {
   const today=new Date();
@@ -1758,7 +2659,33 @@ if(!entries.length) {
 }
 
 // Au démarrage : charge depuis Drive si webhook configuré
-loadFromDrive().then(() => render());
+loadFromDrive().then(() => {
+  render();
+  updateReminderBadge();
+  updateAppSubtitle();
+});
+
+function updateAppSubtitle() {
+  const el = document.getElementById('appSubtitle');
+  if(!el) return;
+  const lastSync = localStorage.getItem('seiko_last_sync');
+  if(lastSync && webhookUrl) {
+    const d = new Date(lastSync);
+    const now = new Date();
+    const diffMin = Math.round((now - d) / 60000);
+    let when;
+    if(diffMin < 1) when = 'à l\'instant';
+    else if(diffMin < 60) when = `il y a ${diffMin}min`;
+    else if(diffMin < 1440) when = `il y a ${Math.round(diffMin/60)}h`;
+    else when = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+    el.textContent = `☁ sync ${when}`;
+  } else if(webhookUrl) {
+    el.textContent = '☁ drive connecté';
+  } else {
+    el.textContent = 'gestion comptable';
+  }
+}
+setInterval(updateAppSubtitle, 60000);
 </script>
 </body>
 </html>
